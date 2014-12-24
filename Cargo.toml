@@ -5,4 +5,4 @@ version = "0.0.1"
 
 [[bin]]
 
-name = "hello_world" 
+name = "lexer" 
