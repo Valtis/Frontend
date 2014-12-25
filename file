@@ -1,0 +1,57 @@
+	// this is a test file for lexer
+
+fn main() {
+  int abc = 4;
+  float def = -123.5f;
+  double ghi = .12353;
+  if (abc == 4) {
+    do_stuff(3, 1, +4234.12);	
+  }
+}
+
+
+
+
+struct Lexer {
+  pos:  uint,
+}
+
+impl Lexer {
+  pub fn new() -> Lexer {
+    Lexer {pos: 0 }
+  }
+
+  pub fn tokenize(&mut self, content: &str) -> Result<Tokens, String> {
+    let mut tokens = Tokens::new();
+
+    self.pos = 0;
+
+    loop {
+      if (self.pos >= content.len()) {
+        match create_token(self) {
+          Ok(token) => tokens.push(token, content),
+          Err(err) => return Err(err),
+        }
+        break;
+      }
+    }
+
+    Ok(tokens)
+  }
+
+  fn create_token(&mut self, content: &str) -> Result<SyntaxToken, String> {
+    if Lexer::starts_identifier(content) {
+      self.handle_identifier()
+    } else {
+      Err(format!("Unexpected symbol {}", ))
+    }
+  }
+
+  fn starts_identifier(ch: char) -> bool {
+    (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_'
+  }
+
+  fn handle_identifier(&self) -> Result<SyntaxToken, String> {
+    Ok(SyntaxToken::new(TokenType::ReservedWord, TokenSubType::If, "if".to_string()))
+  }
+}

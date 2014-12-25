@@ -1,15 +1,25 @@
-use token::TokenType;
-use token::TokenSubType;
-use token::SyntaxToken;
+#[cfg(not(test))]
+use std::io::File;
+#[cfg(not(test))]
+use std::str::from_utf8;
 
+
+mod lexer;
 mod token;
 
+#[cfg(not(test))]
 fn main() {
-  let foo = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber, "32421.1".to_string());
-
-  let equals = TokenType::Number == TokenType::Text;
-  let equals2 = TokenType::Number == TokenType::Number;
-
-  println!("Foo: {}", foo);
-  println!("{}, {}", equals, equals2);
+  // just testing stuff for now
+  let contents = File::open(&Path::new("file")).read_to_end();
+  match contents {
+    Ok(res) => {
+      match from_utf8(res.as_slice()) {
+        Ok(utf_res) => {
+          println!("{}", utf_res)
+        },
+        Err(err) => println!("Conversion error: {}", err),
+      }
+    }
+    Err(err) => println!("Io Error: {}", err),
+  }
 }

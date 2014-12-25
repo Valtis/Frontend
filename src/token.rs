@@ -96,10 +96,13 @@ impl Tokens {
     }
   }
 
+  pub fn token_count(&self) -> uint {
+    self.tokens.len()
+  }
+
   fn invalid_pos(&self) -> bool {
     return self.pos >= self.tokens.len()
   }
-
 }
 
 
@@ -182,7 +185,7 @@ fn pop_on_empty_queue_returns_none() {
   let mut tokens = Tokens::new();
 
   match tokens.pop() {
-    Some(actual) => assert!(false),
+    Some(..) => assert!(false),
     None => assert!(true),
   }
 }
