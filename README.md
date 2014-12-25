@@ -1,4 +1,6 @@
 Lexer
 =====
 
-Learning rust by building a lexer
+Learning Rust by building a lexer. As this is my first Rust project, the code is likely neither idiomatic or good.  
+
+[![Build Status](https://travis-ci.org/Valtis/Lexer.svg)](https://travis-ci.org/Valtis/Lexer)
