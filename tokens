@@ -17,7 +17,7 @@ Left|Right brace: 				{ | }
 Left|Right square bracket: 			[ | ] 
 Quote: 						"
 Comment: 					//
-
+Semicolon					;
 
 Identifiers:
 
