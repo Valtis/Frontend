@@ -33,6 +33,8 @@ fn create_token(ch: char, iter: &mut str::Chars) -> Result<SyntaxToken, String> 
     handle_identifier(ch, iter)
   } else if starts_number(ch) {
     handle_number(ch, iter)
+  } else if starts_string(ch) {
+    handle_string(ch, iter)
   }
   else {
     Err(format!("Unexpected symbol {}", ch))
@@ -45,6 +47,10 @@ fn starts_identifier(ch: char) -> bool {
 
 fn starts_number(ch: char) -> bool {
   is_number(ch) || ch == '.'
+}
+
+fn starts_string(ch: char) -> bool {
+  ch == '"'
 }
 
 fn valid_identifier_character(ch: char) -> bool {
@@ -115,6 +121,45 @@ fn handle_number(ch: char, iter: &mut str::Chars) -> Result<SyntaxToken, String>
   Ok(SyntaxToken::new(TokenType::Number, subtype, value))
 }
 
+fn handle_string(ch: char, iter: &mut str::Chars) -> Result<SyntaxToken, String> {
+
+  let mut value: String = String::new();
+  let mut escape_char_read = false;
+  loop {
+    match iter.next() {
+      Some(ch) => {
+
+          if !escape_char_read && ch == '\\' {
+            escape_char_read = true;
+            continue;
+          }
+
+          if escape_char_read {
+            escape_char_read = false;
+
+            match ch {
+              '"' => value.push('"'),
+              _ => return Err(format!("Invalid escape sequence \\{}", ch)),
+
+            }
+            continue;
+          }
+
+
+          if ch == '"' {
+            break;
+          }
+
+          value.push(ch);
+
+        }
+        None => return Err("Unterminated string".to_string()),
+      }
+    }
+
+  Ok(SyntaxToken::new(TokenType::Text, TokenSubType::Text, value))
+}
+
 
 fn gather_characters(ch: char,
     iter: &mut str::Chars,
@@ -127,13 +172,12 @@ fn gather_characters(ch: char,
     match iter.next() {
       Some(ch) => {
 
-        if ch == ' ' {
-          break;
-        }
-
         if checker(ch) {
           value.push(ch);
         } else {
+          if ch == ' ' {
+            break;
+          }
           return Err(format!("{}: {}", err_msg, ch));
         }
       }
@@ -143,6 +187,33 @@ fn gather_characters(ch: char,
 
   Ok(value)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #[test]
 fn lexer_handles_empty_string_correctly() {
@@ -201,7 +272,7 @@ fn invalid_identifier_character_causes_an_error() {
   let not_ident = "abc#!½!";
 
   match tokenize(not_ident) {
-    Ok(tokens) => assert!(false),
+    Ok(..) => assert!(false),
     Err(..) => assert!(true),
   }
 
@@ -317,7 +388,7 @@ fn number_with_multiple_dots_causes_an_error() {
   let not_number = "123.31.4";
 
   match tokenize(not_number) {
-    Ok(tokens) => assert!(false),
+    Ok(..) => assert!(false),
     Err(..) => assert!(true),
   }
 }
@@ -327,7 +398,7 @@ fn number_starting_with_dot_and_with_multiple_dots_causes_an_error() {
   let not_number = ".123.4";
 
   match tokenize(not_number) {
-    Ok(tokens) => assert!(false),
+    Ok(..) => assert!(false),
     Err(..) => assert!(true),
   }
 }
@@ -371,7 +442,7 @@ fn number_with_identifier_char_in_wrong_spot_causes_an_error() {
   let not_number = ".314d124";
 
   match tokenize(not_number) {
-    Ok(tokens) => assert!(false),
+    Ok(..) => assert!(false),
     Err(..) => assert!(true)
   }
 }
@@ -407,5 +478,81 @@ fn decimal_number_with_float_identifier_char_is_tokenized_correctly() {
       }
     }
     Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn string_is_tokenized_correctly() {
+  let string = "\"this is text\"";
+  match tokenize(string) {
+    Ok(tokens) => {
+      assert_eq!(1, tokens.token_count());
+      let expected = SyntaxToken::new(TokenType::Text, TokenSubType::Text, "this is text".to_string());
+      match tokens.peek() {
+        Some(actual) => assert_eq!(expected, *actual),
+        None => assert!(false),
+      }
+    }
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn string_followed_by_identifier_without_whitespace_is_tokenized_correctly() {
+  let string = "\"this is text 1234 _ öö\"and_this_is_identifier";
+
+  match tokenize(string) {
+    Ok(mut tokens) => {
+      assert_eq!(2, tokens.token_count());
+      let first_expected = SyntaxToken::new(TokenType::Text, TokenSubType::Text, "this is text 1234 _ öö".to_string());
+      let second_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier, "and_this_is_identifier".to_string());
+
+      match tokens.pop() {
+        Some(actual) => assert_eq!(first_expected, *actual),
+        None => assert!(false),
+      }
+
+      match tokens.pop() {
+        Some(actual) => assert_eq!(second_expected, *actual),
+        None => assert!(false),
+      }
+    }
+    Err(err) => { println!("{}", err); assert!(false); },
+  }
+}
+
+
+#[test]
+fn string_with_escaped_quote_is_tokenized_correctly() {
+  let string = "\"this is text with \\\" an escaped quote\"";
+
+  match tokenize(string) {
+    Ok(tokens) => {
+      assert_eq!(1, tokens.token_count());
+      let expected = SyntaxToken::new(TokenType::Text, TokenSubType::Text, "this is text with \" an escaped quote".to_string());
+      match tokens.peek() {
+        Some(actual) => assert_eq!(expected, *actual),
+        None => assert!(false),
+      }
+    }
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn string_with_invalid_escape_sequence_causes_an_error() {
+  let err_string = "\"This string has invalid escape sequence\\!\"";
+  match tokenize(err_string) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true),
+  }
+}
+
+#[test]
+fn unterminated_string_causes_an_error() {
+  let err_string = "\"this is an error";
+  match tokenize(err_string) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true),
   }
 }
