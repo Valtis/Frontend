@@ -1,3 +1,4 @@
+/*
 use token::Tokens;
 use token::SyntaxToken;
 use token::TokenType;
@@ -144,7 +145,6 @@ fn handle_string(ch: char, iter: &mut str::Chars) -> Result<SyntaxToken, String>
             }
             continue;
           }
-
 
           if ch == '"' {
             break;
@@ -555,4 +555,4 @@ fn unterminated_string_causes_an_error() {
     Ok(..) => assert!(false),
     Err(..) => assert!(true),
   }
-}
+}*/
