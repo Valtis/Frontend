@@ -4,7 +4,6 @@ use token::SyntaxToken;
 use token::TokenType;
 use token::TokenSubType;
 use std::str;
-use std::char;
 use std::iter;
 
 pub fn tokenize(content: &str) -> Result<Tokens, String> {
@@ -35,9 +34,9 @@ fn create_token(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result
     handle_operators(ch, iter)
   } else if starts_identifier(ch) {
     handle_identifier(ch, iter)
-  }/* else if starts_number(ch) {
+  } else if starts_number(ch, iter) {
     handle_number(ch, iter)
-  } else if starts_string(ch) {
+  }/* else if starts_string(ch) {
     handle_string(ch, iter)
   }*/
   else {
@@ -65,16 +64,16 @@ fn handle_operators(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Re
 
 
 fn starts_identifier(ch: char) -> bool {
-  char::is_alphabetic(ch) || ch == '_'
+  ch.is_alphabetic() || ch == '_'
 }
 
 fn is_valid_identifier_character(ch: char) -> bool {
-  char::is_alphanumeric(ch) || ch == '_'
+  ch.is_alphanumeric() || ch == '_'
 }
 
 fn handle_identifier(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
 
-  let mut identifier: String = ch.to_string();
+  let mut identifier = ch.to_string();
 
   loop {
     // workaround for multiple mutable borrows
@@ -103,78 +102,60 @@ fn handle_identifier(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> R
   Ok(SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(identifier)))
 }
 
-/*
-fn starts_number(ch: char) -> bool {
-  is_number(ch) || ch == '.'
-}
 
-
-fn starts_string(ch: char) -> bool {
-  ch == '"'
-}
-
-
-
-fn is_number(ch: char) -> bool {
-  (ch >= '0' && ch <= '9')
-}
-
-
-
-fn handle_number(ch: char, iter: &mut str::Chars) -> Result<SyntaxToken, String> {
-
-  // uh, kinda starting to feel hacky/stupid. Probably should reconsider this
-
-  let mut subtype = TokenSubType::IntegerNumber;
-  let mut encourtered_dot = false;
-  let mut encourtered_type_char = false;
-  let mut value: String;
-
-  if ch == '.' {
-    subtype = TokenSubType::DoubleNumber;
-    encourtered_dot = true;
+fn starts_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> bool {
+  if ch.is_digit(10) {
+    true
+  } else if (ch == '.') {
+    match iter.peek() {
+      Some(new_ch) => {
+        new_ch.is_digit(10)
+      }
+      None => {
+        false
+      }
+    }
+  } else {
+    false
   }
+}
 
-  {
+fn handle_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
 
-    let number_checker = |ch: char| {
+  let mut number_str = ch.to_string();
 
-      if encourtered_type_char {
-        return false;
+  loop {
+
+    // workaround for multiple mutable borrows
+    let mut value: Option<char>;
+    // new block so that mutable borrow ends before new borrow at iter.next()
+    {
+      value = match iter.peek() {
+        Some(ch) => Some(*ch),
+        None => None,
       }
+    }
 
-      if ch == 'd' {
-        subtype = TokenSubType::DoubleNumber;
-        encourtered_type_char = true;
-        true
-      } else if ch == 'f' {
-        subtype = TokenSubType::FloatNumber;
-        encourtered_type_char = true;
-        true
-      }
-      else if ch == '.' {
-        if !encourtered_dot {
-          encourtered_dot = true;
-          subtype = TokenSubType::DoubleNumber;
-          true
+    match value {
+      Some(ch) => {
+        if (ch.is_digit(10)) {
+          number_str.push(ch);
+          iter.next();
         } else {
-          false
+          break;
         }
-      } else {
-        is_number(ch)
       }
-    };
+      None => break
+    }
 
-    value = try!(gather_characters(ch, iter, number_checker, "Not a valid number"));
   }
 
-  if encourtered_type_char {
-    value.pop();
+  match from_str::<i32>(number_str.as_slice()) {
+    Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(number))),
+    None => Err("Internal error - non-numeric characters in number token".to_string()),
   }
-
-  Ok(SyntaxToken::new(TokenType::Number, subtype, value))
 }
-
+/*
 fn handle_string(ch: char, iter: &mut str::Chars) -> Result<SyntaxToken, String> {
 
   let mut value: String = String::new();
@@ -290,8 +271,7 @@ fn lexer_tokenizes_identifier_correctly() {
   match tokenize(ident) {
     Ok(mut tokens) => {
       assert_eq!(1, tokens.token_count());
-      let expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(ident.to_string()));
-      assert!(identifier_helper(&mut tokens, &expected));
+      assert!(identifier_helper(&mut tokens, ident));
     }
     Err(..) => assert!(false)
   }
@@ -307,11 +287,9 @@ fn lexer_tokenizes_multiple_identifier_correctly() {
   match tokenize(src.as_slice()) {
     Ok(mut tokens) => {
       assert_eq!(2, tokens.token_count());
-      let first_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(ident1.to_string()));
-      let second_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(ident2.to_string()));
 
-      assert!(identifier_helper(&mut tokens, &first_expected));
-      assert!(identifier_helper(&mut tokens, &second_expected));
+      assert!(identifier_helper(&mut tokens, ident1));
+      assert!(identifier_helper(&mut tokens, ident2));
     }
     Err(..) => assert!(false)
   }
@@ -328,15 +306,12 @@ fn lexer_tokenizes_identfiers_separated_by_operators_correctly() {
   match tokenize(src.as_slice()) {
     Ok(mut tokens) => {
       assert_eq!(5, tokens.token_count());
-      let first_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(ident1.to_string()));
-      let second_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(ident2.to_string()));
-      let third_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(ident3.to_string()));
 
-      assert!(identifier_helper(&mut tokens, &first_expected));
+      assert!(identifier_helper(&mut tokens, ident1));
       assert!(operator_helper(&mut tokens, TokenSubType::Plus));
-      assert!(identifier_helper(&mut tokens, &second_expected));
+      assert!(identifier_helper(&mut tokens, ident2));
       assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
-      assert!(identifier_helper(&mut tokens, &third_expected));
+      assert!(identifier_helper(&mut tokens, ident3));
 
     }
     Err(..) => assert!(false)
@@ -364,29 +339,25 @@ fn lexer_tokenizes_multiple_identifiers_with_lots_of_whitespace_between_correctl
   match tokenize(src.as_slice()) {
     Ok(mut tokens) => {
       assert_eq!(2, tokens.token_count());
-      let first_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(ident1.to_string()));
-      let second_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(ident2.to_string()));
 
-      assert!(identifier_helper(&mut tokens, &first_expected));
-      assert!(identifier_helper(&mut tokens, &second_expected));
+      assert!(identifier_helper(&mut tokens, ident1));
+      assert!(identifier_helper(&mut tokens, ident2));
     }
     Err(..) => assert!(false)
   }
 }
 
-/*
+
 #[test]
 fn lexer_tokenizes_integer_correctly() {
   let integer = "12431";
 
   match tokenize(integer) {
-    Ok(tokens) => {
+    Ok(mut tokens) => {
       assert_eq!(1, tokens.token_count());
-      let expected = SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber, integer.to_string());
-      match tokens.peek() {
-        Some(actual) => assert_eq!(expected, *actual),
-        None => assert!(false),
-      }
+
+      assert!(integer_helper(&mut tokens, 12431));
+
     }
     Err(..) => assert!(false)
   }
@@ -401,24 +372,39 @@ fn lexer_tokenizes_identifier_and_integer_correctly() {
   match tokenize(src.as_slice()) {
     Ok(mut tokens) => {
       assert_eq!(2, tokens.token_count());
-      let first_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier, ident1.to_string());
-      let second_expected = SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber, integer.to_string());
+      assert!(identifier_helper(&mut tokens, ident1));
+      assert!(integer_helper(&mut tokens, 3290));
 
-      match tokens.pop() {
-        Some(actual) => assert_eq!(first_expected, *actual),
-        None => assert!(false),
-      }
+    }
+    Err(..) => assert!(false)
+  }
+}
+#[test]
+fn lexer_tokenizes_numbers_and_operators_correctly() {
 
-      match tokens.pop() {
-        Some(actual) => assert_eq!(second_expected, *actual),
-        None => assert!(false),
-      }
+  let src = "13*14+15 *16 / 16    -1";
+  match tokenize(src.as_slice()) {
+    Ok(mut tokens) => {
+      assert_eq!(11, tokens.token_count());
+
+      assert!(integer_helper(&mut tokens, 13));
+      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(integer_helper(&mut tokens, 14));
+      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(integer_helper(&mut tokens, 15));
+      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(integer_helper(&mut tokens, 16));
+      assert!(operator_helper(&mut tokens, TokenSubType::Divide));
+      assert!(integer_helper(&mut tokens, 16));
+      assert!(operator_helper(&mut tokens, TokenSubType::Minus));
+      assert!(integer_helper(&mut tokens, 1));
 
     }
     Err(..) => assert!(false)
   }
 }
 
+/*
 #[test]
 fn lexer_tokenizes_double_correctly() {
   let double = "124.314";
@@ -628,16 +614,29 @@ fn unterminated_string_causes_an_error() {
 }*/
 
 fn operator_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
-  match tokens.expect(TokenType::ArithOp) {
-    Ok(token) => token.t_subtype == subtype,
-    Err(..) => false,
+
+  let expected = SyntaxToken::new(TokenType::ArithOp, subtype);
+  match tokens.next() {
+    Some(actual) => expected == *actual,
+    None => false,
   }
 }
 
 
-fn identifier_helper(tokens: &mut Tokens, expected: &SyntaxToken) -> bool {
+fn identifier_helper(tokens: &mut Tokens, expected_text: &str) -> bool {
+
+  let expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(expected_text.to_string()));
   match tokens.next() {
-    Some(actual) => expected == actual,
+    Some(actual) => expected == *actual,
     None => false
+  }
+}
+
+fn integer_helper(tokens: &mut Tokens, expected_number: i32) -> bool {
+
+  let expected = SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(expected_number));
+  match tokens.next() {
+    Some(actual) => expected == *actual,
+    None => false,
   }
 }
