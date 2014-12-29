@@ -5,6 +5,7 @@ use token::TokenType;
 use token::TokenSubType;
 use std::str;
 use std::iter;
+use std::num::Float;
 
 pub fn tokenize(content: &str) -> Result<Tokens, String> {
 
@@ -122,10 +123,55 @@ fn starts_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> bool 
 
 fn handle_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
 
+
+
+
   let mut number_str = ch.to_string();
 
+  if (ch == '.') {
+    return handle_decimal_number(number_str, iter);
+  }
   loop {
 
+    // workaround for multiple mutable borrows
+    let mut value: Option<char>;
+    // new block so that mutable borrow ends before new borrow at iter.next()
+    {
+      value = match iter.peek() {
+        Some(ch) => Some(*ch),
+        None => None,
+      }
+    }
+
+    match value {
+      Some(ch) => {
+        if ch.is_digit(10) {
+          number_str.push(ch);
+          iter.next();
+        } else if ch == '.' {
+          number_str.push(ch);
+          iter.next();
+          return handle_decimal_number(number_str, iter);
+        } else if ch.is_alphabetic() {
+          iter.next();
+          return handle_number_type_char(ch, number_str, iter);
+        } else {
+          break;
+        }
+      }
+      None => break
+    }
+
+  }
+
+  match from_str::<i32>(number_str.as_slice()) {
+    Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(number))),
+    None => Err("Internal error - non-numeric characters in number token".to_string()),
+  }
+}
+
+fn handle_decimal_number(mut number_str: String, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
+  loop {
     // workaround for multiple mutable borrows
     let mut value: Option<char>;
     // new block so that mutable borrow ends before new borrow at iter.next()
@@ -141,19 +187,50 @@ fn handle_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Resul
         if (ch.is_digit(10)) {
           number_str.push(ch);
           iter.next();
+        } else if ch.is_alphabetic() {
+          iter.next();
+          return handle_number_type_char(ch, number_str, iter);
+        } else if ch == '.' {
+          return Err("Multiple decimal separators in number".to_string());
         } else {
           break;
         }
       }
       None => break
     }
-
   }
 
-  match from_str::<i32>(number_str.as_slice()) {
-    Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(number))),
+  println!("Number: {}", number_str);
+
+  match from_str::<f64>(number_str.as_slice()) {
+    Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(number))),
     None => Err("Internal error - non-numeric characters in number token".to_string()),
   }
+}
+
+fn handle_number_type_char(type_char: char, number_str: String, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
+  // check that character following the type char is not alphanumeric
+  match iter.peek() {
+    Some(ch) => {
+      if ch.is_alphanumeric() {
+        return Err(format!("Invalid character following number type character: {}", ch));
+      }
+    }
+    None => { /* do nothing */}
+  }
+
+  match type_char {
+    'd' => match from_str::<f64>(number_str.as_slice()) {
+      Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(number))),
+      None => Err("Internal error - non-numeric characters in number token".to_string()),
+    },
+    'f' => match from_str::<f32>(number_str.as_slice()) {
+      Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::FloatNumber(number))),
+      None => Err("Internal error - non-numeric characters in number token".to_string()),
+    },
+    _ => Err(format!("Invalid type character: {}", type_char)),
+  }
+
 }
 /*
 fn handle_string(ch: char, iter: &mut str::Chars) -> Result<SyntaxToken, String> {
@@ -404,19 +481,15 @@ fn lexer_tokenizes_numbers_and_operators_correctly() {
   }
 }
 
-/*
+
 #[test]
 fn lexer_tokenizes_double_correctly() {
   let double = "124.314";
 
   match tokenize(double) {
-    Ok(tokens) => {
+    Ok(mut tokens) => {
       assert_eq!(1, tokens.token_count());
-      let expected = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber, double.to_string());
-      match tokens.peek() {
-        Some(actual) => assert_eq!(expected, *actual),
-        None => assert!(false),
-      }
+      assert!(double_helper(&mut tokens, 124.314));
     }
     Err(..) => assert!(false)
   }
@@ -427,13 +500,9 @@ fn lexer_tokenizes_double_that_starts_with_dot_correctly() {
   let double = ".314";
 
   match tokenize(double) {
-    Ok(tokens) => {
+    Ok(mut tokens) => {
       assert_eq!(1, tokens.token_count());
-      let expected = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber, double.to_string());
-      match tokens.peek() {
-        Some(actual) => assert_eq!(expected, *actual),
-        None => assert!(false),
-      }
+      assert!(double_helper(&mut tokens, 0.314));
     }
     Err(..) => assert!(false)
   }
@@ -459,35 +528,64 @@ fn number_starting_with_dot_and_with_multiple_dots_causes_an_error() {
   }
 }
 
+
+#[test]
+fn numer_with_invalid_identifier_char_causes_an_error() {
+  let not_number = ".1234x";
+
+  match tokenize(not_number) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true),
+  }
+}
+
+#[test]
+fn integer_with_invalid_type_character_causes_an_error() {
+  let not_number = "133r";
+
+  match tokenize(not_number) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true),
+  }
+}
+
+#[test]
+fn number_followed_by_identifier_that_starts_with_identifier_char_is_handled_correctly() {
+  let src = ".1234 fluffy";
+
+  match tokenize(src) {
+    Ok(mut tokens) => {
+      assert_eq!(2, tokens.token_count());
+      assert!(double_helper(&mut tokens, 0.1234));
+      assert!(identifier_helper(&mut tokens, "fluffy"));
+
+    },
+    Err(..) => assert!(false),
+    }
+}
+
 #[test]
 fn integer_with_double_identifier_char_is_tokenized_correctly() {
   let number = "12431d";
 
   match tokenize(number) {
-    Ok(tokens) => {
+    Ok(mut tokens) => {
       assert_eq!(1, tokens.token_count());
-      let expected = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber, "12431".to_string());
-      match tokens.peek() {
-        Some(actual) => assert_eq!(expected, *actual),
-        None => assert!(false),
-      }
-    }
-    Err(..) => assert!(false)
+      assert!(double_helper(&mut tokens, 12431f64));
+    },
+    Err(..) => assert!(false),
   }
 }
 
+
 #[test]
 fn double_number_with_double_identifier_char_is_tokenized_correctly() {
-  let double = ".314d";
+  let number = ".314d";
 
-  match tokenize(double) {
-    Ok(tokens) => {
+  match tokenize(number) {
+    Ok(mut tokens) => {
       assert_eq!(1, tokens.token_count());
-      let expected = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber, ".314".to_string());
-      match tokens.peek() {
-        Some(actual) => assert_eq!(expected, *actual),
-        None => assert!(false),
-      }
+      assert!(double_helper(&mut tokens, 0.314));
     }
     Err(..) => assert!(false)
   }
@@ -508,13 +606,9 @@ fn integer_with_float_identifier_char_is_tokendized_correctly() {
   let number = "12431f";
 
   match tokenize(number) {
-    Ok(tokens) => {
+    Ok(mut tokens) => {
       assert_eq!(1, tokens.token_count());
-      let expected = SyntaxToken::new(TokenType::Number, TokenSubType::FloatNumber, "12431".to_string());
-      match tokens.peek() {
-        Some(actual) => assert_eq!(expected, *actual),
-        None => assert!(false),
-      }
+      assert!(float_helper(&mut tokens, 12431f32));
     }
     Err(..) => assert!(false)
   }
@@ -522,21 +616,40 @@ fn integer_with_float_identifier_char_is_tokendized_correctly() {
 
 #[test]
 fn decimal_number_with_float_identifier_char_is_tokenized_correctly() {
-  let double = ".314f";
+  let number = ".314f";
 
-  match tokenize(double) {
-    Ok(tokens) => {
+  match tokenize(number) {
+    Ok(mut tokens) => {
       assert_eq!(1, tokens.token_count());
-      let expected = SyntaxToken::new(TokenType::Number, TokenSubType::FloatNumber, ".314".to_string());
-      match tokens.peek() {
-        Some(actual) => assert_eq!(expected, *actual),
-        None => assert!(false),
-      }
+      assert!(float_helper(&mut tokens, 0.314f32));
     }
     Err(..) => assert!(false)
   }
 }
 
+#[test]
+fn multiple_decimal_numbers_with_operators_works_correctly() {
+  let src="1.23*32f + 12 + 1.343d * .123f";
+
+  match tokenize(src) {
+    Ok(mut tokens) => {
+      assert_eq!(9, tokens.token_count());
+      assert!(double_helper(&mut tokens, 1.23));
+      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(float_helper(&mut tokens, 32f32));
+      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(integer_helper(&mut tokens, 12));
+      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(double_helper(&mut tokens, 1.343));
+      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(float_helper(&mut tokens, 0.123f32));
+    }
+    Err(..) => assert!(false)
+  }
+}
+
+
+/*
 #[test]
 fn string_is_tokenized_correctly() {
   let string = "\"this is text\"";
@@ -638,5 +751,39 @@ fn integer_helper(tokens: &mut Tokens, expected_number: i32) -> bool {
   match tokens.next() {
     Some(actual) => expected == *actual,
     None => false,
+  }
+}
+
+fn double_helper(tokens: &mut Tokens, expected_number: f64) -> bool {
+  match tokens.next() {
+    Some(actual) => {
+      if actual.t_type == TokenType::Number {
+        match actual.t_subtype {
+          TokenSubType::DoubleNumber(actual_number) => (actual_number - expected_number).abs() < 0.0001,
+          _ => false,
+        }
+
+      } else {
+        false
+      }
+    }
+    None => false
+  }
+}
+
+fn float_helper(tokens: &mut Tokens, expected_number: f32) -> bool {
+  match tokens.next() {
+    Some(actual) => {
+      if actual.t_type == TokenType::Number {
+        match actual.t_subtype {
+          TokenSubType::FloatNumber(actual_number) => (actual_number - expected_number).abs() < 0.0001,
+          _ => false,
+        }
+
+      } else {
+        false
+      }
+    }
+    None => false
   }
 }

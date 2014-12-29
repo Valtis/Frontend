@@ -140,8 +140,8 @@ fn can_create_new_tokens() {
 
 #[test]
 fn floating_token_equality_works() {
-  let first_token = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(234.12));
-  let second_token = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(234.12));
+  let first_token = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(0.1234));
+  let second_token = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(0.1234));
   let third_token = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(12.12));
   assert_eq!(first_token, second_token);
   assert_eq!(second_token, first_token);
