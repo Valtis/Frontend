@@ -373,6 +373,7 @@ fn lexer_tokenizes_multiple_identifiers_with_lots_of_whitespace_between_correctl
     Err(..) => assert!(false)
   }
 }
+
 /*
 #[test]
 fn lexer_tokenizes_integer_correctly() {
@@ -635,7 +636,7 @@ fn operator_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
 
 fn identifier_helper(tokens: &mut Tokens, expected: &SyntaxToken) -> bool {
-  match tokens.pop() {
+  match tokens.next() {
     Some(actual) => expected == actual,
     None => false
   }

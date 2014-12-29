@@ -67,6 +67,8 @@ impl Tokens {
     self.tokens.push(token);
   }
 
+
+  // TODO: Move peek & next to trait implementations
   pub fn peek(&self) -> Option<&SyntaxToken> {
     if !self.invalid_pos() {
       Some(&self.tokens[self.pos])
@@ -75,7 +77,7 @@ impl Tokens {
     }
   }
 
-  pub fn pop(&mut self) -> Option<&SyntaxToken> {
+  pub fn next(&mut self) -> Option<&SyntaxToken> {
     if !self.invalid_pos() {
       self.pos += 1;
       Some(&self.tokens[self.pos-1])
@@ -166,7 +168,7 @@ fn invalid_position_returns_true_when_queue_has_been_emptied() {
   let mut tokens = create_queue();
 
   loop {
-    match tokens.pop() {
+    match tokens.next() {
       Some(..) => { },
       None => break,
     }
@@ -213,18 +215,18 @@ fn calling_peek_multiple_times_does_not_advance_the_queue() {
 }
 
 #[test]
-fn pop_on_empty_queue_returns_none() {
+fn next_on_empty_queue_returns_none() {
 
   let mut tokens = Tokens::new();
 
-  match tokens.pop() {
+  match tokens.next() {
     Some(..) => assert!(false),
     None => assert!(true),
   }
 }
 
 #[test]
-fn pop_advances_queue() {
+fn next_advances_queue() {
 
   let mut tokens = create_queue();
 
@@ -232,17 +234,17 @@ fn pop_advances_queue() {
   let second_expected = SyntaxToken::new(TokenType::LParen, TokenSubType::No_SubType);
   let third_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier("abc".to_string()));
 
-  match tokens.pop() {
+  match tokens.next() {
     Some(actual) => assert_eq!(first_expected, *actual),
     None => assert!(false),
   }
 
-  match tokens.pop() {
+  match tokens.next() {
     Some(actual) => assert_eq!(second_expected, *actual),
     None => assert!(false),
   }
 
-  match tokens.pop() {
+  match tokens.next() {
     Some  (actual) => assert_eq!(third_expected, *actual),
     None => assert!(false),
   }
@@ -354,7 +356,7 @@ fn peek_returns_correct_value_after_pops_and_expects() {
     Err(..) => assert!(false),
   }
 
-  match tokens.pop() {
+  match tokens.next() {
     Some(actual) => assert_eq!(second_expected, *actual),
     None => assert!(false),
   }
