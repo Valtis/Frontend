@@ -15,8 +15,7 @@ pub enum TokenType {
   RBracket,
   SemiColon,
   If,
-  While,
-  For,
+  While
 }
 
 
@@ -30,6 +29,9 @@ pub enum TokenSubType {
   Equals,
   Lesser,
   Greater,
+  GreaterOrEq,
+  LesserOrEq,
+  NotEq,
   Assign,
   Plus,
   Minus,
