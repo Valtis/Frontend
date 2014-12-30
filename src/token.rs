@@ -1,3 +1,4 @@
+use std::num::Float;
 
 #[deriving(Eq, PartialEq, Show)]
 pub enum TokenType {
@@ -40,12 +41,43 @@ pub enum TokenSubType {
   NoSubType,
 }
 
-#[deriving(Show, PartialEq)]
+#[deriving(Show)]
 pub struct SyntaxToken {
   pub t_type: TokenType,
   pub t_subtype: TokenSubType,
   pub line: i32,
   pub pos_at_line: i32
+}
+
+
+// do not check for line numbers or positions; only check for type\subtype equality
+// also, special cases for floating point comparisons
+impl PartialEq for SyntaxToken {
+
+  fn eq(&self, other: &SyntaxToken) -> bool{
+    if self.t_type == other.t_type {
+      match self.t_subtype {
+        TokenSubType::FloatNumber(self_val) => {
+          match (other.t_subtype) {
+            TokenSubType::FloatNumber(other_val) => (self_val - other_val).abs() < 0.0001,
+            _=> false
+          }
+        }
+        TokenSubType::DoubleNumber(self_val) => {
+          match (other.t_subtype) {
+            TokenSubType::DoubleNumber(other_val) => (self_val - other_val).abs() < 0.0001,
+            _=> false
+          }
+        }
+
+        _ => self.t_subtype == other.t_subtype
+      }
+
+    } else {
+      false
+    }
+  }
+
 }
 
 impl SyntaxToken {
