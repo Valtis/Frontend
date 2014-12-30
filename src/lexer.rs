@@ -240,10 +240,10 @@ fn starts_string(ch: char) -> bool {
 fn handle_string(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
 
   let mut value: String = String::new();
-  
+
   loop {
-  match iter.next() {
-    Some(ch) => {
+    match iter.next() {
+      Some(ch) => {
         if ch == '\\' {
           value.push(try!(handle_escape_sequence(iter)));
         } else if ch == '"' {
