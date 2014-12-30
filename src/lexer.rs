@@ -30,8 +30,8 @@ pub fn tokenize(content: &str) -> Result<Tokens, String> {
 
 
 fn create_token(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
-  if starts_operator(ch) {
-    handle_operators(ch, iter)
+  if starts_symbol(ch) {
+    handle_symbols(ch, iter)
   } else if starts_identifier(ch) {
     handle_identifier(ch, iter)
   } else if starts_number(ch, iter) {
@@ -44,20 +44,26 @@ fn create_token(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result
   }
 }
 
-fn starts_operator(ch: char) -> bool {
+fn starts_symbol(ch: char) -> bool {
   match ch {
-    '+' | '-' | '*' | '/' => true,
+    '+' | '-' | '*' | '/' | '[' | ']' | '{' | '}' | '(' | ')' => true,
     _ => false,
   }
 }
 
-fn handle_operators(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
-  // Todo: Add support for += and !=
+fn handle_symbols(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
+
   match ch {
     '+' => Ok(SyntaxToken::new(TokenType::ArithOp, TokenSubType::Plus)),
     '-' => Ok(SyntaxToken::new(TokenType::ArithOp, TokenSubType::Minus)),
     '*' => Ok(SyntaxToken::new(TokenType::ArithOp, TokenSubType::Multiply)),
     '/' => Ok(SyntaxToken::new(TokenType::ArithOp, TokenSubType::Divide)),
+    '[' => Ok(SyntaxToken::new(TokenType::LBracket, TokenSubType::NoSubType)),
+    ']' => Ok(SyntaxToken::new(TokenType::RBracket, TokenSubType::NoSubType)),
+    '{' => Ok(SyntaxToken::new(TokenType::LBrace, TokenSubType::NoSubType)),
+    '}' => Ok(SyntaxToken::new(TokenType::RBrace, TokenSubType::NoSubType)),
+    '(' => Ok(SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType)),
+    ')' => Ok(SyntaxToken::new(TokenType::RParen, TokenSubType::NoSubType)),
     _ => Err(format!("Not an operator: {}", ch))
   }
 }

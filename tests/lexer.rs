@@ -442,6 +442,24 @@ fn string_followed_by_operator_is_handled_correctly() {
 }
 
 
+
+#[test]
+fn parenthesis_brackets_etc_are_tokenized_correctly() {
+  let string = "[( )]{  } ";
+  match tokenize(string) {
+    Ok(mut tokens) => {
+      assert_eq!(6, tokens.token_count());
+      assert!(generic_helper(&mut tokens, TokenType::LBracket));
+      assert!(generic_helper(&mut tokens, TokenType::LParen));
+      assert!(generic_helper(&mut tokens, TokenType::RParen));
+      assert!(generic_helper(&mut tokens, TokenType::RBracket));
+      assert!(generic_helper(&mut tokens, TokenType::LBrace));
+      assert!(generic_helper(&mut tokens, TokenType::RBrace));
+    },
+    Err(..) => assert!(false),
+  }
+}
+
 fn operator_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
   let expected = SyntaxToken::new(TokenType::ArithOp, subtype);
@@ -508,6 +526,16 @@ fn float_helper(tokens: &mut Tokens, expected_number: f32) -> bool {
 fn string_helper(tokens: &mut Tokens, expected_string: &str) -> bool {
 
   let expected = SyntaxToken::new(TokenType::Text, TokenSubType::Text(expected_string.to_string()));
+
+  match tokens.next() {
+    Some(actual) => expected == *actual,
+    None => false
+  }
+}
+
+fn generic_helper(tokens: &mut Tokens, token_type: TokenType) -> bool {
+
+  let expected = SyntaxToken::new(token_type, TokenSubType::NoSubType);
 
   match tokens.next() {
     Some(actual) => expected == *actual,
