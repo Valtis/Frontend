@@ -1,6 +1,6 @@
 use std::num::Float;
 
-#[deriving(Eq, PartialEq, Show)]
+#[deriving(Eq, PartialEq, Show, Copy)]
 pub enum TokenType {
   Assign,
   ArithOp,
@@ -58,13 +58,13 @@ impl PartialEq for SyntaxToken {
     if self.t_type == other.t_type {
       match self.t_subtype {
         TokenSubType::FloatNumber(self_val) => {
-          match (other.t_subtype) {
+          match other.t_subtype {
             TokenSubType::FloatNumber(other_val) => (self_val - other_val).abs() < 0.0001,
             _=> false
           }
         }
         TokenSubType::DoubleNumber(self_val) => {
-          match (other.t_subtype) {
+          match other.t_subtype {
             TokenSubType::DoubleNumber(other_val) => (self_val - other_val).abs() < 0.0001,
             _=> false
           }

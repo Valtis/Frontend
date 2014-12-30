@@ -115,7 +115,7 @@ fn handle_identifier(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> R
 fn starts_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> bool {
   if ch.is_digit(10) {
     true
-  } else if (ch == '.') {
+  } else if ch == '.' {
     match iter.peek() {
       Some(new_ch) => {
         new_ch.is_digit(10)
@@ -133,7 +133,7 @@ fn handle_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Resul
 
   let mut number_str = ch.to_string();
 
-  if (ch == '.') {
+  if ch == '.' {
     return handle_decimal_number(number_str, iter);
   }
   loop {
@@ -169,7 +169,7 @@ fn handle_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Resul
 
   }
 
-  match from_str::<i32>(number_str.as_slice()) {
+  match number_str.parse() {
     Some(number) => Ok(create_token(TokenType::Number, TokenSubType::IntegerNumber(number))),
     None => Err("Internal error - non-numeric characters in number token".to_string()),
   }
@@ -189,7 +189,7 @@ fn handle_decimal_number(mut number_str: String, iter: &mut iter::Peekable<char,
 
     match value {
       Some(ch) => {
-        if (ch.is_digit(10)) {
+        if ch.is_digit(10) {
           number_str.push(ch);
           iter.next();
         } else if ch.is_alphabetic() {
@@ -207,7 +207,7 @@ fn handle_decimal_number(mut number_str: String, iter: &mut iter::Peekable<char,
 
   println!("Number: {}", number_str);
 
-  match from_str::<f64>(number_str.as_slice()) {
+  match number_str.parse() {
     Some(number) => Ok(create_token(TokenType::Number, TokenSubType::DoubleNumber(number))),
     None => Err("Internal error - non-numeric characters in number token".to_string()),
   }
@@ -225,11 +225,11 @@ fn handle_number_type_char(type_char: char, number_str: String, iter: &mut iter:
   }
 
   match type_char {
-    'd' => match from_str::<f64>(number_str.as_slice()) {
+    'd' => match number_str.parse() {
       Some(number) => Ok(create_token(TokenType::Number, TokenSubType::DoubleNumber(number))),
       None => Err("Internal error - non-numeric characters in number token".to_string()),
     },
-    'f' => match from_str::<f32>(number_str.as_slice()) {
+    'f' => match number_str.parse() {
       Some(number) => Ok(create_token(TokenType::Number, TokenSubType::FloatNumber(number))),
       None => Err("Internal error - non-numeric characters in number token".to_string()),
     },
