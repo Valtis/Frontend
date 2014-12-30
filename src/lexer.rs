@@ -19,7 +19,7 @@ pub fn tokenize(content: &str) -> Result<Tokens, String> {
           ' ' | '\n' | '\t' => continue,
           _ => { /* do nothing*/}
         }
-        tokens.push(try!(create_token(ch, &mut iter)));
+        tokens.push(try!(read_token(ch, &mut iter)));
       }
       None => break
     }
@@ -28,8 +28,11 @@ pub fn tokenize(content: &str) -> Result<Tokens, String> {
   Ok(tokens)
 }
 
+fn create_token(token_type: TokenType, token_subtype: TokenSubType) -> SyntaxToken {
+  SyntaxToken::new(token_type, token_subtype, 0, 0)
+}
 
-fn create_token(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
+fn read_token(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
   if starts_symbol(ch) {
     handle_symbols(ch, iter)
   } else if starts_identifier(ch) {
@@ -37,7 +40,7 @@ fn create_token(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result
   } else if starts_number(ch, iter) {
     handle_number(ch, iter)
   } else if starts_string(ch) {
-    handle_string(ch, iter)
+    handle_string(iter)
   }
   else {
     Err(format!("Unexpected symbol {}", ch))
@@ -54,16 +57,16 @@ fn starts_symbol(ch: char) -> bool {
 fn handle_symbols(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
 
   match ch {
-    '+' => Ok(SyntaxToken::new(TokenType::ArithOp, TokenSubType::Plus)),
-    '-' => Ok(SyntaxToken::new(TokenType::ArithOp, TokenSubType::Minus)),
-    '*' => Ok(SyntaxToken::new(TokenType::ArithOp, TokenSubType::Multiply)),
-    '/' => Ok(SyntaxToken::new(TokenType::ArithOp, TokenSubType::Divide)),
-    '[' => Ok(SyntaxToken::new(TokenType::LBracket, TokenSubType::NoSubType)),
-    ']' => Ok(SyntaxToken::new(TokenType::RBracket, TokenSubType::NoSubType)),
-    '{' => Ok(SyntaxToken::new(TokenType::LBrace, TokenSubType::NoSubType)),
-    '}' => Ok(SyntaxToken::new(TokenType::RBrace, TokenSubType::NoSubType)),
-    '(' => Ok(SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType)),
-    ')' => Ok(SyntaxToken::new(TokenType::RParen, TokenSubType::NoSubType)),
+    '+' => Ok(create_token(TokenType::ArithOp, TokenSubType::Plus)),
+    '-' => Ok(create_token(TokenType::ArithOp, TokenSubType::Minus)),
+    '*' => Ok(create_token(TokenType::ArithOp, TokenSubType::Multiply)),
+    '/' => Ok(create_token(TokenType::ArithOp, TokenSubType::Divide)),
+    '[' => Ok(create_token(TokenType::LBracket, TokenSubType::NoSubType)),
+    ']' => Ok(create_token(TokenType::RBracket, TokenSubType::NoSubType)),
+    '{' => Ok(create_token(TokenType::LBrace, TokenSubType::NoSubType)),
+    '}' => Ok(create_token(TokenType::RBrace, TokenSubType::NoSubType)),
+    '(' => Ok(create_token(TokenType::LParen, TokenSubType::NoSubType)),
+    ')' => Ok(create_token(TokenType::RParen, TokenSubType::NoSubType)),
     _ => Err(format!("Not an operator: {}", ch))
   }
 }
@@ -105,7 +108,7 @@ fn handle_identifier(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> R
     }
   }
 
-  Ok(SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(identifier)))
+  Ok(create_token(TokenType::Identifier, TokenSubType::Identifier(identifier)))
 }
 
 
@@ -127,9 +130,6 @@ fn starts_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> bool 
 }
 
 fn handle_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
-
-
-
 
   let mut number_str = ch.to_string();
 
@@ -170,7 +170,7 @@ fn handle_number(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Resul
   }
 
   match from_str::<i32>(number_str.as_slice()) {
-    Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(number))),
+    Some(number) => Ok(create_token(TokenType::Number, TokenSubType::IntegerNumber(number))),
     None => Err("Internal error - non-numeric characters in number token".to_string()),
   }
 }
@@ -208,7 +208,7 @@ fn handle_decimal_number(mut number_str: String, iter: &mut iter::Peekable<char,
   println!("Number: {}", number_str);
 
   match from_str::<f64>(number_str.as_slice()) {
-    Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(number))),
+    Some(number) => Ok(create_token(TokenType::Number, TokenSubType::DoubleNumber(number))),
     None => Err("Internal error - non-numeric characters in number token".to_string()),
   }
 }
@@ -226,11 +226,11 @@ fn handle_number_type_char(type_char: char, number_str: String, iter: &mut iter:
 
   match type_char {
     'd' => match from_str::<f64>(number_str.as_slice()) {
-      Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(number))),
+      Some(number) => Ok(create_token(TokenType::Number, TokenSubType::DoubleNumber(number))),
       None => Err("Internal error - non-numeric characters in number token".to_string()),
     },
     'f' => match from_str::<f32>(number_str.as_slice()) {
-      Some(number) => Ok(SyntaxToken::new(TokenType::Number, TokenSubType::FloatNumber(number))),
+      Some(number) => Ok(create_token(TokenType::Number, TokenSubType::FloatNumber(number))),
       None => Err("Internal error - non-numeric characters in number token".to_string()),
     },
     _ => Err(format!("Invalid type character: {}", type_char)),
@@ -243,7 +243,7 @@ fn starts_string(ch: char) -> bool {
   ch == '"'
 }
 
-fn handle_string(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
+fn handle_string(iter: &mut iter::Peekable<char, str::Chars>) -> Result<SyntaxToken, String> {
 
   let mut value: String = String::new();
 
@@ -271,7 +271,7 @@ fn handle_string(ch: char, iter: &mut iter::Peekable<char, str::Chars>) -> Resul
     }
   }
 
-  Ok(SyntaxToken::new(TokenType::Text, TokenSubType::Text(value)))
+  Ok(create_token(TokenType::Text, TokenSubType::Text(value)))
 }
 
 fn handle_escape_sequence(iter: &mut iter::Peekable<char, str::Chars>) -> Result<char, String> {

@@ -6,7 +6,6 @@ use compiler::token::TokenType;
 use compiler::token::TokenSubType;
 use compiler::token::Tokens;
 
-use std::num::Float;
 
 #[test]
 fn arithmetic_operators_are_tokenized_correctly() {
@@ -462,7 +461,7 @@ fn parenthesis_brackets_etc_are_tokenized_correctly() {
 
 fn operator_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
-  let expected = SyntaxToken::new(TokenType::ArithOp, subtype);
+  let expected = SyntaxToken::new(TokenType::ArithOp, subtype, 0 ,0);
   match tokens.next() {
     Some(actual) => expected == *actual,
     None => false,
@@ -472,7 +471,7 @@ fn operator_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
 fn identifier_helper(tokens: &mut Tokens, expected_text: &str) -> bool {
 
-  let expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(expected_text.to_string()));
+  let expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(expected_text.to_string()), 0, 0);
   match tokens.next() {
     Some(actual) => expected == *actual,
     None => false
@@ -481,7 +480,7 @@ fn identifier_helper(tokens: &mut Tokens, expected_text: &str) -> bool {
 
 fn integer_helper(tokens: &mut Tokens, expected_number: i32) -> bool {
 
-  let expected = SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(expected_number));
+  let expected = SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(expected_number), 0, 0);
   match tokens.next() {
     Some(actual) => expected == *actual,
     None => false,
@@ -489,35 +488,19 @@ fn integer_helper(tokens: &mut Tokens, expected_number: i32) -> bool {
 }
 
 fn double_helper(tokens: &mut Tokens, expected_number: f64) -> bool {
-  match tokens.next() {
-    Some(actual) => {
-      if actual.t_type == TokenType::Number {
-        match actual.t_subtype {
-          TokenSubType::DoubleNumber(actual_number) => (actual_number - expected_number).abs() < 0.0001,
-          _ => false,
-        }
+  let expected = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(expected_number), 0, 0);
 
-        } else {
-          false
-        }
-      }
+  match tokens.next() {
+    Some(actual) => expected == *actual,
     None => false
   }
 }
 
 fn float_helper(tokens: &mut Tokens, expected_number: f32) -> bool {
-  match tokens.next() {
-    Some(actual) => {
-      if actual.t_type == TokenType::Number {
-        match actual.t_subtype {
-          TokenSubType::FloatNumber(actual_number) => (actual_number - expected_number).abs() < 0.0001,
-          _ => false,
-        }
 
-        } else {
-          false
-        }
-      }
+  let expected = SyntaxToken::new(TokenType::Number, TokenSubType::FloatNumber(expected_number), 0, 0);
+  match tokens.next() {
+    Some(actual) => expected == *actual,
     None => false
   }
 }
@@ -525,7 +508,7 @@ fn float_helper(tokens: &mut Tokens, expected_number: f32) -> bool {
 
 fn string_helper(tokens: &mut Tokens, expected_string: &str) -> bool {
 
-  let expected = SyntaxToken::new(TokenType::Text, TokenSubType::Text(expected_string.to_string()));
+  let expected = SyntaxToken::new(TokenType::Text, TokenSubType::Text(expected_string.to_string()), 0, 0);
 
   match tokens.next() {
     Some(actual) => expected == *actual,
@@ -535,7 +518,7 @@ fn string_helper(tokens: &mut Tokens, expected_string: &str) -> bool {
 
 fn generic_helper(tokens: &mut Tokens, token_type: TokenType) -> bool {
 
-  let expected = SyntaxToken::new(token_type, TokenSubType::NoSubType);
+  let expected = SyntaxToken::new(token_type, TokenSubType::NoSubType, 0 ,0);
 
   match tokens.next() {
     Some(actual) => expected == *actual,

@@ -43,12 +43,14 @@ pub enum TokenSubType {
 #[deriving(Show, PartialEq)]
 pub struct SyntaxToken {
   pub t_type: TokenType,
-  pub t_subtype: TokenSubType
+  pub t_subtype: TokenSubType,
+  pub line: i32,
+  pub pos_at_line: i32
 }
 
 impl SyntaxToken {
-  pub fn new(token_type: TokenType, subtype: TokenSubType) -> SyntaxToken {
-    SyntaxToken { t_type: token_type, t_subtype: subtype}
+  pub fn new(token_type: TokenType, subtype: TokenSubType, line: i32, pos_at_line: i32) -> SyntaxToken {
+    SyntaxToken { t_type: token_type, t_subtype: subtype, line: line, pos_at_line: pos_at_line }
   }
 }
 
@@ -127,8 +129,8 @@ fn invalid_position_returns_true_on_empty_queue() {
 fn invalid_position_returns_false_on_non_empty_queue() {
   let mut tokens = Tokens::new();
 
-  tokens.push(SyntaxToken::new(TokenType::If, TokenSubType::NoSubType));
-  tokens.push(SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType));
+  tokens.push(SyntaxToken::new(TokenType::If, TokenSubType::NoSubType, 0, 0));
+  tokens.push(SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType, 0, 0));
 
   assert_eq!(false, tokens.invalid_pos());
 }
@@ -138,8 +140,8 @@ fn invalid_position_returns_true_when_queue_has_been_emptied() {
 
   let mut tokens = Tokens::new();
 
-  tokens.push(SyntaxToken::new(TokenType::If, TokenSubType::NoSubType));
-  tokens.push(SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType));
+  tokens.push(SyntaxToken::new(TokenType::If, TokenSubType::NoSubType, 0, 0));
+  tokens.push(SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType, 0 ,0));
 
   loop {
     match tokens.next() {
