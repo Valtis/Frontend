@@ -1,8 +1,8 @@
 [package]
 
-name = "lexer"
+name = "compiler"
 version = "0.0.1"
 
 [[bin]]
 
-name = "lexer" 
+name = "compiler" 

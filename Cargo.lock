@@ -1,4 +1,4 @@
 [root]
-name = "lexer"
+name = "compiler"
 version = "0.0.1"
 

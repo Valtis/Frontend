@@ -1,14 +1,15 @@
+extern crate compiler;
+
 #[cfg(not(test))]
 use std::io::File;
 #[cfg(not(test))]
 use std::str::from_utf8;
 
-
-mod lexer;
-mod token;
-
 #[cfg(not(test))]
 fn main() {
+
+  let values = compiler::lexer::tokenize("herpaderp");
+
   // just testing stuff for now
   let contents = File::open(&Path::new("file")).read_to_end();
   match contents {
