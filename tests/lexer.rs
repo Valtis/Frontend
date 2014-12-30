@@ -459,6 +459,25 @@ fn parenthesis_brackets_etc_are_tokenized_correctly() {
   }
 }
 
+#[test]
+fn line_and_line_position_information_is_set_correctly_to_tokens() {
+  let string = "ident 123\n[value+123]\n    ident2";
+
+  match tokenize(string) {
+    Ok(mut tokens) => {
+      assert!(line_helper(&mut tokens, 1, 1));
+      assert!(line_helper(&mut tokens, 1, 7));
+      assert!(line_helper(&mut tokens, 2, 1));
+      assert!(line_helper(&mut tokens, 2, 2));
+      assert!(line_helper(&mut tokens, 2, 7));
+      assert!(line_helper(&mut tokens, 2, 8));
+      assert!(line_helper(&mut tokens, 2, 11));
+      assert!(line_helper(&mut tokens, 3, 5));
+    },
+    Err(..) => assert!(false),
+  }
+}
+
 fn operator_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
   let expected = SyntaxToken::new(TokenType::ArithOp, subtype, 0 ,0);
@@ -522,6 +541,14 @@ fn generic_helper(tokens: &mut Tokens, token_type: TokenType) -> bool {
 
   match tokens.next() {
     Some(actual) => expected == *actual,
+    None => false
+  }
+}
+
+fn line_helper(tokens: &mut Tokens,  line_number: i32, line_pos: i32) -> bool {
+
+  match tokens.next() {
+    Some(token) => token.line == line_number && token.pos_at_line == line_pos,
     None => false
   }
 }
