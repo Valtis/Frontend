@@ -479,10 +479,29 @@ fn assignment_and_comparison_operators_are_tokenized_correctly() {
       assert!(generic_helper(&mut tokens, TokenType::Assign));
       assert!(generic_helper(&mut tokens, TokenType::Assign));
 
-      },
-      Err(..) => assert!(false),
-    }
+    },
+    Err(..) => assert!(false),
   }
+}
+
+#[test]
+fn function_call_syntax_is_tokenized_correctly() {
+  let string = "foo(ident_1, ident_2);";
+
+  match tokenize(string) {
+    Ok(mut tokens) => {
+      assert_eq!(7, tokens.token_count());
+      assert!(identifier_helper(&mut tokens, "foo"));
+      assert!(generic_helper(&mut tokens, TokenType::LParen));
+      assert!(identifier_helper(&mut tokens, "ident_1"));      
+      assert!(generic_helper(&mut tokens, TokenType::Colon));
+      assert!(identifier_helper(&mut tokens, "ident_2"));
+      assert!(generic_helper(&mut tokens, TokenType::RParen));
+      assert!(generic_helper(&mut tokens, TokenType::SemiColon));
+    },
+    Err(..) => assert!(false),
+  }
+}
 
 #[test]
 fn line_and_line_position_information_is_set_correctly_to_tokens() {

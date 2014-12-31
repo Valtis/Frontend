@@ -14,6 +14,7 @@ pub enum TokenType {
   RBrace,
   LBracket,
   RBracket,
+  Colon,
   SemiColon,
   If,
   Else,

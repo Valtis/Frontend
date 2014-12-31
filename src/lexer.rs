@@ -73,10 +73,9 @@ impl<'a> Lexer<'a> {
     }
   }
 
-
   fn starts_symbol(ch: char) -> bool {
     match ch {
-      '+' | '-' | '*' | '/' | '[' | ']' | '{' | '}' | '(' | ')' | '<' | '>' | '=' => true,
+      '+' | '-' | '*' | '/' | '[' | ']' | '{' | '}' | '(' | ')' | '<' | '>' | '=' | ';' | ',' => true,
       _ => false,
     }
   }
@@ -94,6 +93,8 @@ impl<'a> Lexer<'a> {
       '}' => Ok(self.create_token(TokenType::RBrace, TokenSubType::NoSubType)),
       '(' => Ok(self.create_token(TokenType::LParen, TokenSubType::NoSubType)),
       ')' => Ok(self.create_token(TokenType::RParen, TokenSubType::NoSubType)),
+      ';' => Ok(self.create_token(TokenType::SemiColon, TokenSubType::NoSubType)),
+      ',' => Ok(self.create_token(TokenType::Colon, TokenSubType::NoSubType)),
       '=' => self.multi_char_operator_helper('=', TokenType::CompOp, TokenSubType::Equals, TokenType::Assign, TokenSubType::NoSubType),
       '>' => self.multi_char_operator_helper('=', TokenType::CompOp, TokenSubType::GreaterOrEq, TokenType::CompOp, TokenSubType::Greater),
       '<' => self.multi_char_operator_helper('=', TokenType::CompOp, TokenSubType::LesserOrEq, TokenType::CompOp, TokenSubType::Lesser),
@@ -285,8 +286,6 @@ impl<'a> Lexer<'a> {
         None => break
       }
     }
-
-    println!("Number: {}", number_str);
 
     match number_str.parse() {
       Some(number) => Ok(self.create_token(TokenType::Number, TokenSubType::DoubleNumber(number))),
