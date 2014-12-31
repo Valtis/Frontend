@@ -7,5 +7,7 @@ fn main() {
   double ghi = .12353;
   if (abc == 4) {
     do_stuff(3, 1, 4234.12);	
+  } else if (abc != 15) {
+    bar(13234.2);
   }
 }

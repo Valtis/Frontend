@@ -461,11 +461,11 @@ fn parenthesis_brackets_braces_are_tokenized_correctly() {
 
 #[test]
 fn assignment_and_comparison_operators_are_tokenized_correctly() {
-  let string = "= == < > <= >= < = > = = =";
+  let string = "= == < > <= >= < = > = = = !=";
 
   match tokenize(string) {
     Ok(mut tokens) => {
-      assert_eq!(12, tokens.token_count());
+      assert_eq!(13, tokens.token_count());
       assert!(generic_helper(&mut tokens, TokenType::Assign));
       assert!(comp_op_helper(&mut tokens, TokenSubType::Equals));
       assert!(comp_op_helper(&mut tokens, TokenSubType::Lesser));
@@ -478,6 +478,7 @@ fn assignment_and_comparison_operators_are_tokenized_correctly() {
       assert!(generic_helper(&mut tokens, TokenType::Assign));
       assert!(generic_helper(&mut tokens, TokenType::Assign));
       assert!(generic_helper(&mut tokens, TokenType::Assign));
+      assert!(comp_op_helper(&mut tokens, TokenSubType::NotEq));
 
     },
     Err(..) => assert!(false),
@@ -493,7 +494,7 @@ fn function_call_syntax_is_tokenized_correctly() {
       assert_eq!(7, tokens.token_count());
       assert!(identifier_helper(&mut tokens, "foo"));
       assert!(generic_helper(&mut tokens, TokenType::LParen));
-      assert!(identifier_helper(&mut tokens, "ident_1"));      
+      assert!(identifier_helper(&mut tokens, "ident_1"));
       assert!(generic_helper(&mut tokens, TokenType::Colon));
       assert!(identifier_helper(&mut tokens, "ident_2"));
       assert!(generic_helper(&mut tokens, TokenType::RParen));

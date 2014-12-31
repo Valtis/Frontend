@@ -32,7 +32,6 @@ pub enum TokenType {
   VarType,
 }
 
-
 #[deriving(PartialEq, Show)]
 pub enum TokenSubType {
   Text(String),

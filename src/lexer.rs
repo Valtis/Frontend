@@ -75,7 +75,7 @@ impl<'a> Lexer<'a> {
 
   fn starts_symbol(ch: char) -> bool {
     match ch {
-      '+' | '-' | '*' | '/' | '[' | ']' | '{' | '}' | '(' | ')' | '<' | '>' | '=' | ';' | ',' => true,
+      '+' | '-' | '*' | '/' | '[' | ']' | '{' | '}' | '(' | ')' | '<' | '>' | '=' | ';' | ',' | '!' => true,
       _ => false,
     }
   }
@@ -98,6 +98,22 @@ impl<'a> Lexer<'a> {
       '=' => self.multi_char_operator_helper('=', TokenType::CompOp, TokenSubType::Equals, TokenType::Assign, TokenSubType::NoSubType),
       '>' => self.multi_char_operator_helper('=', TokenType::CompOp, TokenSubType::GreaterOrEq, TokenType::CompOp, TokenSubType::Greater),
       '<' => self.multi_char_operator_helper('=', TokenType::CompOp, TokenSubType::LesserOrEq, TokenType::CompOp, TokenSubType::Lesser),
+      // special case compared to above, as '!' right now is not a valid operator
+      '!' =>  {
+        let mut next_char= ' ';
+
+        match self.next_char() {
+          Some(char) => next_char = char,
+          _ => { /* Do nothing*/ },
+        }
+
+        if next_char == '=' {
+          Ok(self.create_token(TokenType::CompOp, TokenSubType::NotEq))
+        } else {
+          Err(format!("Invalid character following '!','=' expected"))
+        }
+      }
+
       _ => Err(format!("Not an operator: {}", ch))
     }
   }
