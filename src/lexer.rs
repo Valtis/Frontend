@@ -57,7 +57,10 @@ impl<'a> Lexer<'a> {
 
     match self.next_char() {
       Some(ch) => {
-        if Lexer::starts_symbol(ch) {
+        if self.starts_comment(ch) {
+          self.skip_comment();
+          self.read_token()
+        } else if Lexer::starts_symbol(ch) {
           Some(self.handle_symbols(ch))
         } else if Lexer::starts_identifier(ch) {
           Some(self.handle_identifier(ch))
@@ -70,6 +73,26 @@ impl<'a> Lexer<'a> {
         }
       }
       None => None,
+    }
+  }
+
+  fn starts_comment(&mut self, ch: char) -> bool {
+    if ch == '/' {
+      return match self.iter.peek() {
+        Some(ch) => *ch == '/',
+        None => false,
+      }
+    }
+
+    false
+  }
+
+  fn skip_comment(&mut self) {
+    loop {
+      match self.next_char() {
+        Some(ch) => if ch == '\n' { break },
+        None => break,
+      }
     }
   }
 

@@ -555,6 +555,21 @@ fn keywords_are_tokenized_correctly() {
   }
 }
 
+#[test]
+fn comments_are_ignored_correctly() {
+  let string="ident_1// This is comment\nident2";
+  match tokenize(string) {
+    Ok(mut tokens) => {
+      assert_eq!(2, tokens.token_count());
+      assert!(identifier_helper(&mut tokens, "ident_1"));
+      assert!(identifier_helper(&mut tokens, "ident2"));
+
+    },
+    Err(..) => assert!(false),
+  }
+}
+
+
 fn arith_op_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
   let expected = SyntaxToken::new(TokenType::ArithOp, subtype, 0 ,0);
