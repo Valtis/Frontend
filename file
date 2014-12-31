@@ -5,9 +5,12 @@ fn main() {
   int abc = 4;
   float def = -123.5f;
   double ghi = .12353;
-  if (abc == 4) {
+  if (abc == 4) {// comment on the same line!
     do_stuff(3, 1, 4234.12);	
   } else if (abc != 15) {
     bar(13234.2);
   }
+
+  "this is text";
+  "this is text\n with escape \t sequences";
 }

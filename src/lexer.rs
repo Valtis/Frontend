@@ -17,7 +17,7 @@ pub fn tokenize(content: &str) -> Result<Tokens, String> {
       Some(res) => match res {
         Ok(token) => tokens.push(token),
         Err(err_str) => {
-          return Err(format!("Error at {}:{}: {}", lexer.token_start_line_number, lexer.token_start_line_pos, err_str));
+          return Err(format!("Error with token starting at {}:{}: {}", lexer.token_start_line_number, lexer.token_start_line_pos, err_str));
         }
       },
       None => break,
