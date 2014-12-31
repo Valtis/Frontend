@@ -17,7 +17,7 @@ pub fn tokenize(content: &str) -> Result<Tokens, String> {
       Some(res) => match res {
         Ok(token) => tokens.push(token),
         Err(err_str) => {
-          return Err(format!("Error at {}:{}: {}", lexer.cur_line_number, lexer.cur_line_pos, err_str));
+          return Err(format!("Error at {}:{}: {}", lexer.token_start_line_number, lexer.token_start_line_pos, err_str));
         }
       },
       None => break,
@@ -76,7 +76,7 @@ impl<'a> Lexer<'a> {
 
   fn starts_symbol(ch: char) -> bool {
     match ch {
-      '+' | '-' | '*' | '/' | '[' | ']' | '{' | '}' | '(' | ')' => true,
+      '+' | '-' | '*' | '/' | '[' | ']' | '{' | '}' | '(' | ')' | '<' | '>' | '=' => true,
       _ => false,
     }
   }
@@ -94,9 +94,36 @@ impl<'a> Lexer<'a> {
       '}' => Ok(self.create_token(TokenType::RBrace, TokenSubType::NoSubType)),
       '(' => Ok(self.create_token(TokenType::LParen, TokenSubType::NoSubType)),
       ')' => Ok(self.create_token(TokenType::RParen, TokenSubType::NoSubType)),
+      '=' => self.multi_char_operator_helper('=', TokenType::CompOp, TokenSubType::Equals, TokenType::Assign, TokenSubType::NoSubType),
+      '>' => self.multi_char_operator_helper('=', TokenType::CompOp, TokenSubType::GreaterOrEq, TokenType::CompOp, TokenSubType::Greater),
+      '<' => self.multi_char_operator_helper('=', TokenType::CompOp, TokenSubType::LesserOrEq, TokenType::CompOp, TokenSubType::Lesser),
       _ => Err(format!("Not an operator: {}", ch))
     }
   }
+
+  fn multi_char_operator_helper (
+    &mut self,
+    optional_second_char: char,
+    type_if_matches: TokenType,
+    subtype_if_matches: TokenSubType,
+    type_if_no_match: TokenType,
+    subtype_if_no_match:TokenSubType) -> Result<SyntaxToken, String> {
+
+      let mut next_char = ' ';
+
+      match self.iter.peek() {
+        Some(ch) => next_char = *ch,
+        None => { /* do nothing */}
+      };
+
+      if next_char == optional_second_char {
+        // consume the next character
+        self.next_char();
+        Ok(self.create_token(type_if_matches, subtype_if_matches))
+      } else {
+        Ok(self.create_token(type_if_no_match, subtype_if_no_match))
+      }
+    }
 
 
   fn starts_identifier(ch: char) -> bool {
@@ -268,6 +295,16 @@ impl<'a> Lexer<'a> {
   }
 
   fn handle_number_type_char(&mut self, type_char: char, number_str: String) -> Result<SyntaxToken, String> {
+
+    match type_char {
+      'd'|'f' => {
+        self.create_number_token(type_char, number_str)
+      }
+      _ => Err(format!("Invalid type character: {}", type_char)),
+    }
+  }
+
+  fn create_number_token(&mut self, type_char: char, number_str: String) -> Result<SyntaxToken, String> {
     // check that character following the type char is not alphanumeric
     match self.iter.peek() {
       Some(ch) => {
@@ -278,18 +315,17 @@ impl<'a> Lexer<'a> {
       None => { /* do nothing */}
     }
 
-    match type_char {
-      'd' => match number_str.parse() {
+    if type_char == 'd' {
+      match number_str.parse() {
         Some(number) => Ok(self.create_token(TokenType::Number, TokenSubType::DoubleNumber(number))),
         None => Err("Internal error - non-numeric characters in number token".to_string()),
-      },
-      'f' => match number_str.parse() {
+      }
+    } else {
+      match number_str.parse() {
         Some(number) => Ok(self.create_token(TokenType::Number, TokenSubType::FloatNumber(number))),
         None => Err("Internal error - non-numeric characters in number token".to_string()),
-      },
-      _ => Err(format!("Invalid type character: {}", type_char)),
+      }
     }
-
   }
 
 

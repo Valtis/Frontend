@@ -15,14 +15,14 @@ fn arithmetic_operators_are_tokenized_correctly() {
   match tokenize(value) {
     Ok(mut tokens) => {
       assert_eq!(8, tokens.token_count());
-      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
-      assert!(operator_helper(&mut tokens, TokenSubType::Minus));
-      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
-      assert!(operator_helper(&mut tokens, TokenSubType::Divide));
-      assert!(operator_helper(&mut tokens, TokenSubType::Divide));
-      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
-      assert!(operator_helper(&mut tokens, TokenSubType::Minus));
-      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Plus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Minus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Divide));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Divide));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Minus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Plus));
     }
     Err(..) => assert!(false)
   }
@@ -81,9 +81,9 @@ fn lexer_tokenizes_identfiers_separated_by_operators_correctly() {
       assert_eq!(5, tokens.token_count());
 
       assert!(identifier_helper(&mut tokens, ident1));
-      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Plus));
       assert!(identifier_helper(&mut tokens, ident2));
-      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Multiply));
       assert!(identifier_helper(&mut tokens, ident3));
 
     }
@@ -161,15 +161,15 @@ fn lexer_tokenizes_numbers_and_operators_correctly() {
       assert_eq!(11, tokens.token_count());
 
       assert!(integer_helper(&mut tokens, 13));
-      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Multiply));
       assert!(integer_helper(&mut tokens, 14));
-      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Plus));
       assert!(integer_helper(&mut tokens, 15));
-      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Multiply));
       assert!(integer_helper(&mut tokens, 16));
-      assert!(operator_helper(&mut tokens, TokenSubType::Divide));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Divide));
       assert!(integer_helper(&mut tokens, 16));
-      assert!(operator_helper(&mut tokens, TokenSubType::Minus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Minus));
       assert!(integer_helper(&mut tokens, 1));
 
     }
@@ -332,13 +332,13 @@ fn multiple_decimal_numbers_with_operators_works_correctly() {
     Ok(mut tokens) => {
       assert_eq!(9, tokens.token_count());
       assert!(double_helper(&mut tokens, 1.23));
-      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Multiply));
       assert!(float_helper(&mut tokens, 32f32));
-      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Plus));
       assert!(integer_helper(&mut tokens, 12));
-      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Plus));
       assert!(double_helper(&mut tokens, 1.343));
-      assert!(operator_helper(&mut tokens, TokenSubType::Multiply));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Multiply));
       assert!(float_helper(&mut tokens, 0.123f32));
     }
     Err(..) => assert!(false)
@@ -432,9 +432,9 @@ fn string_followed_by_operator_is_handled_correctly() {
   match tokenize(string) {
     Ok(mut tokens) => {
       assert_eq!(3, tokens.token_count());
-      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Plus));
       assert!(string_helper(&mut tokens, "hello"));
-      assert!(operator_helper(&mut tokens, TokenSubType::Plus));
+      assert!(arith_op_helper(&mut tokens, TokenSubType::Plus));
     }
     Err(..) => assert!(true),
   }
@@ -443,7 +443,7 @@ fn string_followed_by_operator_is_handled_correctly() {
 
 
 #[test]
-fn parenthesis_brackets_etc_are_tokenized_correctly() {
+fn parenthesis_brackets_braces_are_tokenized_correctly() {
   let string = "[( )]{  } ";
   match tokenize(string) {
     Ok(mut tokens) => {
@@ -458,6 +458,31 @@ fn parenthesis_brackets_etc_are_tokenized_correctly() {
     Err(..) => assert!(false),
   }
 }
+
+#[test]
+fn assignment_and_comparison_operators_are_tokenized_correctly() {
+  let string = "= == < > <= >= < = > = = =";
+
+  match tokenize(string) {
+    Ok(mut tokens) => {
+      assert_eq!(12, tokens.token_count());
+      assert!(generic_helper(&mut tokens, TokenType::Assign));
+      assert!(comp_op_helper(&mut tokens, TokenSubType::Equals));
+      assert!(comp_op_helper(&mut tokens, TokenSubType::Lesser));
+      assert!(comp_op_helper(&mut tokens, TokenSubType::Greater));
+      assert!(comp_op_helper(&mut tokens, TokenSubType::LesserOrEq));
+      assert!(comp_op_helper(&mut tokens, TokenSubType::GreaterOrEq));
+      assert!(comp_op_helper(&mut tokens, TokenSubType::Lesser));
+      assert!(generic_helper(&mut tokens, TokenType::Assign));
+      assert!(comp_op_helper(&mut tokens, TokenSubType::Greater));
+      assert!(generic_helper(&mut tokens, TokenType::Assign));
+      assert!(generic_helper(&mut tokens, TokenType::Assign));
+      assert!(generic_helper(&mut tokens, TokenType::Assign));
+
+      },
+      Err(..) => assert!(false),
+    }
+  }
 
 #[test]
 fn line_and_line_position_information_is_set_correctly_to_tokens() {
@@ -508,12 +533,9 @@ fn keywords_are_tokenized_correctly() {
     },
     Err(..) => assert!(false),
   }
-
-
 }
 
-
-fn operator_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
+fn arith_op_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
   let expected = SyntaxToken::new(TokenType::ArithOp, subtype, 0 ,0);
   match tokens.next() {
@@ -522,6 +544,14 @@ fn operator_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
   }
 }
 
+fn comp_op_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
+
+  let expected = SyntaxToken::new(TokenType::CompOp, subtype, 0 ,0);
+  match tokens.next() {
+    Some(actual) => expected == *actual,
+    None => false,
+  }
+}
 
 fn identifier_helper(tokens: &mut Tokens, expected_text: &str) -> bool {
 
