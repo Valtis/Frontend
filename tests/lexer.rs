@@ -465,6 +465,7 @@ fn line_and_line_position_information_is_set_correctly_to_tokens() {
 
   match tokenize(string) {
     Ok(mut tokens) => {
+      assert_eq!(8, tokens.token_count());
       assert!(line_helper(&mut tokens, 1, 1));
       assert!(line_helper(&mut tokens, 1, 7));
       assert!(line_helper(&mut tokens, 2, 1));
@@ -477,6 +478,40 @@ fn line_and_line_position_information_is_set_correctly_to_tokens() {
     Err(..) => assert!(false),
   }
 }
+
+#[test]
+fn keywords_are_tokenized_correctly() {
+  let string = "if else while for let fn class new return public protected private true false int float double bool void";
+
+  match tokenize(string) {
+    Ok(mut tokens) => {
+      assert_eq!(19, tokens.token_count());
+      assert!(generic_helper(&mut tokens, TokenType::If));
+      assert!(generic_helper(&mut tokens, TokenType::Else));
+      assert!(generic_helper(&mut tokens, TokenType::While));
+      assert!(generic_helper(&mut tokens, TokenType::For));
+      assert!(generic_helper(&mut tokens, TokenType::Let));
+      assert!(generic_helper(&mut tokens, TokenType::Fn));
+      assert!(generic_helper(&mut tokens, TokenType::Class));
+      assert!(generic_helper(&mut tokens, TokenType::New));
+      assert!(generic_helper(&mut tokens, TokenType::Return));
+      assert!(generic_helper(&mut tokens, TokenType::Public));
+      assert!(generic_helper(&mut tokens, TokenType::Protected));
+      assert!(generic_helper(&mut tokens, TokenType::Private));
+      assert!(boolean_helper(&mut tokens, true));
+      assert!(boolean_helper(&mut tokens, false));
+      assert!(type_helper(&mut tokens, TokenSubType::IntegerType));
+      assert!(type_helper(&mut tokens, TokenSubType::FloatType));
+      assert!(type_helper(&mut tokens, TokenSubType::DoubleType));
+      assert!(type_helper(&mut tokens, TokenSubType::BooleanType));
+      assert!(type_helper(&mut tokens, TokenSubType::VoidType));
+    },
+    Err(..) => assert!(false),
+  }
+
+
+}
+
 
 fn operator_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
@@ -524,6 +559,15 @@ fn float_helper(tokens: &mut Tokens, expected_number: f32) -> bool {
   }
 }
 
+fn boolean_helper(tokens: &mut Tokens, expected_value: bool) -> bool {
+
+  let expected = SyntaxToken::new(TokenType::Boolean, TokenSubType::BooleanValue(expected_value), 0, 0);
+  match tokens.next() {
+    Some(actual) => expected == *actual,
+    None => false
+  }
+}
+
 
 fn string_helper(tokens: &mut Tokens, expected_string: &str) -> bool {
 
@@ -549,6 +593,16 @@ fn line_helper(tokens: &mut Tokens,  line_number: i32, line_pos: i32) -> bool {
 
   match tokens.next() {
     Some(token) => token.line == line_number && token.pos_at_line == line_pos,
+    None => false
+  }
+}
+
+fn type_helper(tokens: &mut Tokens, subtype: TokenSubType) -> bool {
+
+  let expected = SyntaxToken::new(TokenType::VarType, subtype, 0 ,0);
+
+  match tokens.next() {
+    Some(actual) => expected == *actual,
     None => false
   }
 }

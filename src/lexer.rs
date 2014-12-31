@@ -54,7 +54,7 @@ impl<'a> Lexer<'a> {
 
     self.token_start_line_number = self.cur_line_number;
     self.token_start_line_pos = self.cur_line_pos;
-    
+
     match self.next_char() {
       Some(ch) => {
         if Lexer::starts_symbol(ch) {
@@ -134,7 +134,37 @@ impl<'a> Lexer<'a> {
       }
     }
 
-    Ok(self.create_token(TokenType::Identifier, TokenSubType::Identifier(identifier)))
+
+    match self.handle_keywords(identifier.as_slice()) {
+      Some(token) => Ok(token),
+      None => Ok(self.create_token(TokenType::Identifier, TokenSubType::Identifier(identifier)))
+    }
+  }
+  /*if, else, while, for, let, fn, return, new, class,
+  public, protected, private, true, false, int, float, double, bool, void*/
+  fn handle_keywords(&self, identifier: &str) -> Option<SyntaxToken> {
+    match identifier {
+      "if" => Some(self.create_token(TokenType::If, TokenSubType::NoSubType)),
+      "else" => Some(self.create_token(TokenType::Else, TokenSubType::NoSubType)),
+      "while" => Some(self.create_token(TokenType::While, TokenSubType::NoSubType)),
+      "for" => Some(self.create_token(TokenType::For, TokenSubType::NoSubType)),
+      "let" => Some(self.create_token(TokenType::Let, TokenSubType::NoSubType)),
+      "fn" => Some(self.create_token(TokenType::Fn, TokenSubType::NoSubType)),
+      "return" => Some(self.create_token(TokenType::Return, TokenSubType::NoSubType)),
+      "new" => Some(self.create_token(TokenType::New, TokenSubType::NoSubType)),
+      "class" => Some(self.create_token(TokenType::Class, TokenSubType::NoSubType)),
+      "public" => Some(self.create_token(TokenType::Public, TokenSubType::NoSubType)),
+      "protected" => Some(self.create_token(TokenType::Protected, TokenSubType::NoSubType)),
+      "private" => Some(self.create_token(TokenType::Private, TokenSubType::NoSubType)),
+      "true" => Some(self.create_token(TokenType::Boolean, TokenSubType::BooleanValue(true))),
+      "false" => Some(self.create_token(TokenType::Boolean, TokenSubType::BooleanValue(false))),
+      "int" => Some(self.create_token(TokenType::VarType, TokenSubType::IntegerType)),
+      "float" => Some(self.create_token(TokenType::VarType, TokenSubType::FloatType)),
+      "double" => Some(self.create_token(TokenType::VarType, TokenSubType::DoubleType)),
+      "bool" => Some(self.create_token(TokenType::VarType, TokenSubType::BooleanType)),
+      "void" => Some(self.create_token(TokenType::VarType, TokenSubType::VoidType)),
+      _ => None
+    }
   }
 
   // either a number, or dot followed by a number

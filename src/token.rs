@@ -16,7 +16,19 @@ pub enum TokenType {
   RBracket,
   SemiColon,
   If,
-  While
+  Else,
+  While,
+  For,
+  Let,
+  Fn,
+  Return,
+  Boolean,
+  New,
+  Class,
+  Public,
+  Protected,
+  Private,
+  VarType,
 }
 
 
@@ -27,6 +39,12 @@ pub enum TokenSubType {
   DoubleNumber(f64),
   IntegerNumber(i32),
   Identifier(String),
+  BooleanValue(bool),
+  FloatType,
+  DoubleType,
+  IntegerType,
+  BooleanType,
+  VoidType,
   Equals,
   Lesser,
   Greater,
