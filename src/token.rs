@@ -1,6 +1,6 @@
 use std::num::Float;
 
-#[deriving(Eq, PartialEq, Show, Copy)]
+#[derive(Eq, PartialEq, Show, Copy)]
 pub enum TokenType {
   Assign,
   ArithOp,
@@ -32,7 +32,7 @@ pub enum TokenType {
   VarType,
 }
 
-#[deriving(PartialEq, Show)]
+#[derive(PartialEq, Show)]
 pub enum TokenSubType {
   Text(String),
   FloatNumber(f32),
@@ -59,7 +59,7 @@ pub enum TokenSubType {
   NoSubType,
 }
 
-#[deriving(Show)]
+#[derive(Show)]
 pub struct SyntaxToken {
   pub t_type: TokenType,
   pub t_subtype: TokenSubType,
