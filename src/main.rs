@@ -13,7 +13,7 @@ fn main() {
 
 }
 
-
+#[cfg(not(test))]
 fn read_file(name: &str) -> String {
   let contents = File::open(&Path::new(name)).read_to_end();
   match contents {
@@ -27,6 +27,7 @@ fn read_file(name: &str) -> String {
   }
 }
 
+#[cfg(not(test))]
 fn tokenize_file(name: &str) -> compiler::token::Tokens {
 
   let content = read_file(name);
@@ -41,6 +42,7 @@ fn tokenize_file(name: &str) -> compiler::token::Tokens {
   };
 }
 
+#[cfg(not(test))]
 fn parse_tokens(tokens: &compiler::token::Tokens) {
   match compiler::parser::parse(tokens) {
     Ok(..) => println!("Parsing succeeded"),
@@ -51,7 +53,7 @@ fn parse_tokens(tokens: &compiler::token::Tokens) {
   }
 }
 
-
+#[cfg(not(test))]
 fn print_errors(errors: Vec<String>) {
   println!("Error(s) were found:");
   for error in errors.iter() {
