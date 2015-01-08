@@ -44,7 +44,7 @@ CONSTANT_VALUE = integer_token
 
 Error recovery
 
-On error, find next opening block ("{"), statement terminator (";") or top level token ("fn"). Error recovery is used purely so that parser may find more than single error when parsing, allowing faster error correction by user. No syntax tree is generated if errors are found. 
+On error, find next  block ("{") or end of current one "}", statement terminator (";") or top level token ("fn"). Error recovery is used purely so that parser may find more than single error when parsing, allowing faster error correction by user. No syntax tree is generated if errors are found. 
 
 
 

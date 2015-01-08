@@ -152,13 +152,14 @@ impl Tokens {
 
   pub fn expect(&mut self, token_type: TokenType) -> Result<SyntaxToken, String> {
     if self.invalid_pos() {
-      Err("Token queue is empty".to_string())
+      Err(format!("Error: Token was not of expected type {}. No token found",
+      token_type))
     } else if self.tokens[self.pos].t_type == token_type {
       self.pos += 1;
       Ok(self.tokens[self.pos - 1])
     } else {
       Err(format!("Error: Token was not of expected type {}. Was actually {}",
-      token_type, self.tokens[self.pos]))
+      token_type, self.tokens[self.pos].t_type))
     }
   }
 

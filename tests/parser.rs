@@ -45,16 +45,24 @@ fn parser_errors_on_parameterless_function_without_closed_block() {
   }
 }
 
+
 #[test]
-fn parser_reports_multiple_errors_correctly() {
-  let tokens = tokenize("fn func() {\nfn  hum() }\nfn () { }").unwrap();
+fn parser_errors_on_parameterless_function_without_left_parenthesis() {
+  let tokens = tokenize("fn func) { }").unwrap();
+
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(errors) => {
-      assert_eq!(3, errors.len());
-      assert!(errors[0].contains("tbd"));
-      assert!(errors[0].contains("tbd"));
-      assert!(errors[0].contains("tbd"));
-    }
+    Err(..) => assert!(true),
+  }
+}
+
+
+#[test]
+fn parser_errors_on_parameterless_function_without_right_parenthesis() {
+  let tokens = tokenize("fn func( { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true),
   }
 }
