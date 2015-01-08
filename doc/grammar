@@ -1,0 +1,46 @@
+Notes:
+-e stands for epsilon
+-Lowercase text are terminals, uppercase are nonterminals 
+-whitespace is non-significant
+-this is work in progress and is expanded as needed
+
+
+S -> FUNCTION S | e
+
+FUNCTION -> fn PARAM_LIST BLOCK
+
+PARAM_LIST -> ( OPT_FUNCTION_PARAMS )
+
+OPT_FUNCTION_PARAMS -> FUNCTION_PARAMS 
+                     | e
+
+FUNCTION_PARAMS -> FUNCTION_PARAM 
+                 | FUNCTION_PARAM, FUNCTION_PARAMS 
+                 
+FUNCTION_PARAM -> IDENTIFIER : TYPE
+
+BLOCK -> { STATEMENTS }
+
+STATEMENTS -> STATEMENT STATEMENTS | e
+
+STATEMENT -> IDENTIFIER : TYPE = EXPRESSION ;
+
+EXPRESSION = CONSTANT_VALUE
+
+
+TYPE -> int_type
+      | float_type
+      | double_type
+      | boolean_type
+      | string_type 
+
+CONSTANT_VALUE = integer_token
+               | float_token
+               | double_token
+               | boolean_token
+               | string_token  
+
+
+
+
+
