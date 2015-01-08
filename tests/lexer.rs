@@ -584,6 +584,19 @@ fn comments_are_ignored_correctly() {
 }
 
 
+#[test]
+fn multiple_errors_are_reported_correctly() {
+  let error_string = "ident_1!!\n 01323ff";
+  match tokenize(error_string) {
+      Ok(..) => assert!(false),
+      Err(errors) => {
+        assert_eq!(2, errors.len());
+        assert!(errors[0].contains("1:10"));
+        assert!(errors[1].contains("2:8"));
+      }
+    }
+}
+
 fn arith_op_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
   let expected = SyntaxToken::new(TokenType::ArithOp, subtype, 0 ,0);
