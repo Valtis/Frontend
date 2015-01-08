@@ -35,11 +35,11 @@ pub enum TokenType {
 
 #[derive(PartialEq, Show)]
 pub enum TokenSubType {
-  Text(String),
+  Text(uint), // index to text table
   FloatNumber(f32),
   DoubleNumber(f64),
   IntegerNumber(i32),
-  Identifier(String),
+  Identifier(uint), // index to text table
   BooleanValue(bool),
   FloatType,
   DoubleType,
@@ -60,7 +60,11 @@ pub enum TokenSubType {
   NoSubType,
 }
 
-#[derive(Show)]
+impl Copy for TokenSubType {
+
+}
+
+#[derive(Show, Copy)]
 pub struct SyntaxToken {
   pub t_type: TokenType,
   pub t_subtype: TokenSubType,
@@ -73,7 +77,7 @@ pub struct SyntaxToken {
 // also, special cases for floating point comparisons
 impl PartialEq for SyntaxToken {
 
-  fn eq(&self, other: &SyntaxToken) -> bool{
+  fn eq(&self, other: &SyntaxToken) -> bool {
     if self.t_type == other.t_type {
       match self.t_subtype {
         TokenSubType::FloatNumber(self_val) => {
@@ -106,6 +110,7 @@ impl SyntaxToken {
 }
 
 pub struct Tokens {
+  text_table:Vec<String>,
   tokens: Vec<SyntaxToken>,
   pos: uint,
 }
@@ -113,38 +118,44 @@ pub struct Tokens {
 impl Tokens {
 
   pub fn new() -> Tokens {
-    Tokens{ tokens: vec![], pos: 0}
+    Tokens{ text_table: vec![], tokens: vec![], pos: 0}
+  }
+
+  pub fn set_text_table(&mut self, text_table:Vec<String>) {
+    self.text_table = text_table;
+  }
+
+  pub fn get_text(&self, index: uint) -> &str {
+    self.text_table[index].as_slice()
   }
 
   pub fn push(&mut self, token: SyntaxToken) {
     self.tokens.push(token);
   }
 
-
-  // TODO: Move peek & next to trait implementations
-  pub fn peek(&self) -> Option<&SyntaxToken> {
+  pub fn peek(&self) -> Option<SyntaxToken> {
     if !self.invalid_pos() {
-      Some(&self.tokens[self.pos])
+      Some(self.tokens[self.pos])
     } else {
       None
     }
   }
 
-  pub fn next(&mut self) -> Option<&SyntaxToken> {
+  pub fn next(&mut self) -> Option<SyntaxToken> {
     if !self.invalid_pos() {
       self.pos += 1;
-      Some(&self.tokens[self.pos-1])
+      Some(self.tokens[self.pos-1])
     } else {
       None
     }
   }
 
-  pub fn expect(&mut self, token_type: TokenType) -> Result<&SyntaxToken, String> {
+  pub fn expect(&mut self, token_type: TokenType) -> Result<SyntaxToken, String> {
     if self.invalid_pos() {
       Err("Token queue is empty".to_string())
     } else if self.tokens[self.pos].t_type == token_type {
       self.pos += 1;
-      Ok(&self.tokens[self.pos - 1])
+      Ok(self.tokens[self.pos - 1])
     } else {
       Err(format!("Error: Token was not of expected type {}. Was actually {}",
       token_type, self.tokens[self.pos]))

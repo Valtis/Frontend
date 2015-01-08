@@ -8,7 +8,7 @@ use compiler::parser::parse;
 fn parser_accepts_parameterless_function_with_empty_block() {
   let tokens = tokenize("fn func() { }").unwrap();
 
-  match parse(&tokens) {
+  match parse(tokens) {
     Ok(..) => assert!(true),
     Err(..) => assert!(false),
   }
@@ -18,7 +18,7 @@ fn parser_accepts_parameterless_function_with_empty_block() {
 fn parser_errors_on_parameterless_function_without_identifier() {
   let tokens = tokenize("fn () { }").unwrap();
 
-  match parse(&tokens) {
+  match parse(tokens) {
     Ok(..) => assert!(false),
     Err(..) => assert!(true),
   }
@@ -29,7 +29,7 @@ fn parser_errors_on_parameterless_function_without_identifier() {
 fn parser_errors_on_parameterless_function_without_opened_block() {
   let tokens = tokenize("fn func()  }").unwrap();
 
-  match parse(&tokens) {
+  match parse(tokens) {
     Ok(..) => assert!(false),
     Err(..) => assert!(true),
   }
@@ -39,7 +39,7 @@ fn parser_errors_on_parameterless_function_without_opened_block() {
 fn parser_errors_on_parameterless_function_without_closed_block() {
   let tokens = tokenize("fn func() { ").unwrap();
 
-  match parse(&tokens) {
+  match parse(tokens) {
     Ok(..) => assert!(false),
     Err(..) => assert!(true),
   }
@@ -48,7 +48,7 @@ fn parser_errors_on_parameterless_function_without_closed_block() {
 #[test]
 fn parser_reports_multiple_errors_correctly() {
   let tokens = tokenize("fn func() {\nfn  hum() }\nfn () { }").unwrap();
-  match parse(&tokens) {
+  match parse(tokens) {
     Ok(..) => assert!(false),
     Err(errors) => {
       assert_eq!(3, errors.len());

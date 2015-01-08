@@ -9,7 +9,7 @@ use std::str::from_utf8;
 #[cfg(not(test))]
 fn main() {
   let tokens = tokenize_file("file");
-  parse_tokens(&tokens);
+  parse_tokens(tokens);
 
 }
 
@@ -43,7 +43,7 @@ fn tokenize_file(name: &str) -> compiler::token::Tokens {
 }
 
 #[cfg(not(test))]
-fn parse_tokens(tokens: &compiler::token::Tokens) {
+fn parse_tokens(tokens: compiler::token::Tokens) {
   match compiler::parser::parse(tokens) {
     Ok(..) => println!("Parsing succeeded"),
     Err(errors) => {

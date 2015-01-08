@@ -34,6 +34,7 @@ pub fn tokenize(content: &str) -> Result<Tokens, Vec<String>> {
 
 
   if errors.is_empty() {
+    tokens.set_text_table(lexer.text_table);
     Ok(tokens)
   } else {
     Err(errors)
@@ -47,9 +48,8 @@ struct Lexer<'a> {
   token_start_line_number: i32,
   token_start_line_pos: i32,
   iter: iter::Peekable<char, str::Chars<'a>>,
+  text_table: Vec<String>,
 }
-
-
 
 impl<'a> Lexer<'a> {
 
@@ -59,7 +59,8 @@ impl<'a> Lexer<'a> {
       cur_line_pos: 1,
       token_start_line_number: 1,
       token_start_line_pos: 1,
-      iter: content.chars().peekable()
+      iter: content.chars().peekable(),
+      text_table: vec![],
     }
   }
 
@@ -219,7 +220,10 @@ impl<'a> Lexer<'a> {
 
     match self.handle_keywords(identifier.as_slice()) {
       Some(token) => Ok(token),
-      None => Ok(self.create_token(TokenType::Identifier, TokenSubType::Identifier(identifier)))
+      None => {
+        let index = self.add_text_to_table(identifier);
+        Ok(self.create_token(TokenType::Identifier, TokenSubType::Identifier(index)))
+      }
     }
   }
   /*if, else, while, for, let, fn, return, new, class,
@@ -414,7 +418,9 @@ impl<'a> Lexer<'a> {
       }
     }
 
-    Ok(self.create_token(TokenType::Text, TokenSubType::Text(value)))
+
+    let index = self.add_text_to_table(value);
+    Ok(self.create_token(TokenType::Text, TokenSubType::Text(index)))
   }
 
   fn handle_escape_sequence(&mut self) -> Result<char, String> {
@@ -496,4 +502,19 @@ impl<'a> Lexer<'a> {
       };
     }
   }
+
+  fn add_text_to_table(&mut self, new_text: String) -> uint {
+    let mut pos = 0;
+    while pos < self.text_table.len() {
+      if self.text_table[pos] == new_text {
+        return pos;
+      }
+      pos += 1;
+    }
+
+    self.text_table.push(new_text);
+    return self.text_table.len() - 1
+  }
+
+
 }

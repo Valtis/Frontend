@@ -601,7 +601,7 @@ fn arith_op_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
   let expected = SyntaxToken::new(TokenType::ArithOp, subtype, 0 ,0);
   match tokens.next() {
-    Some(actual) => expected == *actual,
+    Some(actual) => expected == actual,
     None => false,
   }
 }
@@ -610,25 +610,32 @@ fn comp_op_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
   let expected = SyntaxToken::new(TokenType::CompOp, subtype, 0 ,0);
   match tokens.next() {
-    Some(actual) => expected == *actual,
+    Some(actual) => expected == actual,
     None => false,
   }
 }
 
 fn identifier_helper(tokens: &mut Tokens, expected_text: &str) -> bool {
 
-  let expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(expected_text.to_string()), 0, 0);
   match tokens.next() {
-    Some(actual) => expected == *actual,
-    None => false
-  }
+    Some(actual) => {
+      assert_eq!(TokenType::Identifier, actual.t_type);
+
+      match actual.t_subtype {
+        TokenSubType::Identifier(index) => tokens.get_text(index) == expected_text,
+        _ => false,
+      }
+
+      },
+      None => false
+    }
 }
 
 fn integer_helper(tokens: &mut Tokens, expected_number: i32) -> bool {
 
   let expected = SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(expected_number), 0, 0);
   match tokens.next() {
-    Some(actual) => expected == *actual,
+    Some(actual) => expected == actual,
     None => false,
   }
 }
@@ -637,7 +644,7 @@ fn double_helper(tokens: &mut Tokens, expected_number: f64) -> bool {
   let expected = SyntaxToken::new(TokenType::Number, TokenSubType::DoubleNumber(expected_number), 0, 0);
 
   match tokens.next() {
-    Some(actual) => expected == *actual,
+    Some(actual) => expected == actual,
     None => false
   }
 }
@@ -646,7 +653,7 @@ fn float_helper(tokens: &mut Tokens, expected_number: f32) -> bool {
 
   let expected = SyntaxToken::new(TokenType::Number, TokenSubType::FloatNumber(expected_number), 0, 0);
   match tokens.next() {
-    Some(actual) => expected == *actual,
+    Some(actual) => expected == actual,
     None => false
   }
 }
@@ -655,7 +662,7 @@ fn boolean_helper(tokens: &mut Tokens, expected_value: bool) -> bool {
 
   let expected = SyntaxToken::new(TokenType::Boolean, TokenSubType::BooleanValue(expected_value), 0, 0);
   match tokens.next() {
-    Some(actual) => expected == *actual,
+    Some(actual) => expected == actual,
     None => false
   }
 }
@@ -663,10 +670,14 @@ fn boolean_helper(tokens: &mut Tokens, expected_value: bool) -> bool {
 
 fn string_helper(tokens: &mut Tokens, expected_string: &str) -> bool {
 
-  let expected = SyntaxToken::new(TokenType::Text, TokenSubType::Text(expected_string.to_string()), 0, 0);
-
   match tokens.next() {
-    Some(actual) => expected == *actual,
+    Some(actual) => {
+      assert_eq!(TokenType::Text, actual.t_type);
+      match actual.t_subtype {
+        TokenSubType::Text(index) => tokens.get_text(index) == expected_string,
+        _ => false,
+      }
+    },
     None => false
   }
 }
@@ -676,7 +687,7 @@ fn generic_helper(tokens: &mut Tokens, token_type: TokenType) -> bool {
   let expected = SyntaxToken::new(token_type, TokenSubType::NoSubType, 0 ,0);
 
   match tokens.next() {
-    Some(actual) => expected == *actual,
+    Some(actual) => expected == actual,
     None => false
   }
 }
@@ -694,7 +705,7 @@ fn type_helper(tokens: &mut Tokens, subtype: TokenSubType) -> bool {
   let expected = SyntaxToken::new(TokenType::VarType, subtype, 0 ,0);
 
   match tokens.next() {
-    Some(actual) => expected == *actual,
+    Some(actual) => expected == actual,
     None => false
   }
 }

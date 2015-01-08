@@ -39,7 +39,7 @@ fn peek_retuns_the_wanted_token_from_queue() {
   let expected = SyntaxToken::new(TokenType::If, TokenSubType::NoSubType, 0, 0);
 
   match tokens.peek() {
-    Some(actual) => assert_eq!(expected, *actual),
+    Some(actual) => assert_eq!(expected, actual),
     None => assert!(false),
   }
 }
@@ -55,7 +55,7 @@ fn calling_peek_multiple_times_does_not_advance_the_queue() {
   tokens.peek();
 
   match tokens.peek() {
-    Some(actual) => assert_eq!(expected, *actual),
+    Some(actual) => assert_eq!(expected, actual),
     None => assert!(false),
   }
 }
@@ -78,20 +78,20 @@ fn next_advances_queue() {
 
   let first_expected = SyntaxToken::new(TokenType::If, TokenSubType::NoSubType, 0, 0);
   let second_expected = SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType, 0, 0);
-  let third_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier("abc".to_string()), 0, 0);
+  let third_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(0), 0, 0);
 
   match tokens.next() {
-    Some(actual) => assert_eq!(first_expected, *actual),
+    Some(actual) => assert_eq!(first_expected, actual),
     None => assert!(false),
   }
 
   match tokens.next() {
-    Some(actual) => assert_eq!(second_expected, *actual),
+    Some(actual) => assert_eq!(second_expected, actual),
     None => assert!(false),
   }
 
   match tokens.next() {
-    Some  (actual) => assert_eq!(third_expected, *actual),
+    Some  (actual) => assert_eq!(third_expected, actual),
     None => assert!(false),
   }
 }
@@ -134,7 +134,7 @@ fn expect_with_right_values_returns_the_token() {
   let expected = SyntaxToken::new(TokenType::If, TokenSubType::NoSubType, 0, 0);
 
   match tokens.expect(TokenType::If) {
-    Ok(actual) => assert_eq!(expected, *actual),
+    Ok(actual) => assert_eq!(expected, actual),
     Err(..) => assert!(false),
   }
 }
@@ -145,20 +145,20 @@ fn expect_advances_queue() {
 
   let first_expected = SyntaxToken::new(TokenType::If, TokenSubType::NoSubType, 0, 0);
   let second_expected = SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType, 0, 0);
-  let third_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier("abc".to_string()), 0, 0);
+  let third_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(0), 0, 0);
 
   match tokens.expect(TokenType::If) {
-    Ok(actual) => assert_eq!(first_expected, *actual),
+    Ok(actual) => assert_eq!(first_expected, actual),
     Err(..) => assert!(false),
   }
 
   match tokens.expect(TokenType::LParen) {
-    Ok(actual) => assert_eq!(second_expected, *actual),
+    Ok(actual) => assert_eq!(second_expected, actual),
     Err(..) => assert!(false),
   }
 
   match tokens.expect(TokenType::Identifier) {
-    Ok(actual) => assert_eq!(third_expected, *actual),
+    Ok(actual) => assert_eq!(third_expected, actual),
     Err(..) => assert!(false),
   }
 }
@@ -179,12 +179,12 @@ fn expect_failure_followed_by_correct_values_advances_queue() {
   }
 
   match tokens.expect(TokenType::If) {
-    Ok(actual) => assert_eq!(first_expected, *actual),
+    Ok(actual) => assert_eq!(first_expected, actual),
     Err(..) => assert!(false),
   }
 
   match tokens.expect(TokenType::LParen) {
-    Ok(actual) => assert_eq!(second_expected, *actual),
+    Ok(actual) => assert_eq!(second_expected, actual),
     Err(..) => assert!(false),
   }
 }
@@ -195,20 +195,20 @@ fn peek_returns_correct_value_after_pops_and_expects() {
 
   let first_expected = SyntaxToken::new(TokenType::If, TokenSubType::NoSubType, 0, 0);
   let second_expected = SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType, 0, 0);
-  let third_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier("abc".to_string()), 0, 0);
+  let third_expected = SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(0), 0, 0);
 
   match tokens.expect(TokenType::If) {
-    Ok(actual) => assert_eq!(first_expected, *actual),
+    Ok(actual) => assert_eq!(first_expected, actual),
     Err(..) => assert!(false),
   }
 
   match tokens.next() {
-    Some(actual) => assert_eq!(second_expected, *actual),
+    Some(actual) => assert_eq!(second_expected, actual),
     None => assert!(false),
   }
 
   match tokens.peek() {
-    Some(actual) => assert_eq!(third_expected, *actual),
+    Some(actual) => assert_eq!(third_expected, actual),
     None => assert!(false),
   }
 }
@@ -216,16 +216,17 @@ fn peek_returns_correct_value_after_pops_and_expects() {
 fn create_queue() -> Tokens {
 
   let mut tokens = Tokens::new();
-
+  let text_table = vec!["abc".to_string(), "def".to_string()];
+  tokens.set_text_table(text_table);
   // push tokens if (abc == 5) { def = 2; }
   tokens.push(SyntaxToken::new(TokenType::If, TokenSubType::NoSubType, 0, 0));
   tokens.push(SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType, 0, 0));
-  tokens.push(SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier("abc".to_string()), 0, 0));
+  tokens.push(SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(0), 0, 0));
   tokens.push(SyntaxToken::new(TokenType::CompOp, TokenSubType::Equals, 0, 0));
   tokens.push(SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(5), 0, 0));
   tokens.push(SyntaxToken::new(TokenType::RParen, TokenSubType::NoSubType, 0, 0));
   tokens.push(SyntaxToken::new(TokenType::LBrace, TokenSubType::NoSubType, 0, 0));
-  tokens.push(SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier("def".to_string()), 0, 0));
+  tokens.push(SyntaxToken::new(TokenType::Identifier, TokenSubType::Identifier(1), 0, 0));
   tokens.push(SyntaxToken::new(TokenType::Assign, TokenSubType::NoSubType, 0, 0));
   tokens.push(SyntaxToken::new(TokenType::Number, TokenSubType::IntegerNumber(2), 0, 0));
   tokens.push(SyntaxToken::new(TokenType::SemiColon, TokenSubType::NoSubType, 0, 0));
