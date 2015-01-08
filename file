@@ -2,6 +2,9 @@
 
 fn correct_syntax(param_1:int, param_2:float) {
   a:int = 5;
+
+  a:int = 23fff2f!f;
+  _dasda!12:_
   
 }
 

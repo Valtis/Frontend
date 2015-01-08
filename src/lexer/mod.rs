@@ -7,24 +7,38 @@ use std::str;
 use std::iter;
 
 
-pub fn tokenize(content: &str) -> Result<Tokens, String> {
+pub fn tokenize(content: &str) -> Result<Tokens, Vec<String>> {
 
   let mut tokens = Tokens::new();
   let mut lexer = Lexer::new(content);
+  let mut errors: Vec<String> = Vec::new();
 
   loop {
     match lexer.read_token() {
       Some(res) => match res {
         Ok(token) => tokens.push(token),
         Err(err_str) => {
-          return Err(format!("Error with token starting at {}:{}: {}", lexer.token_start_line_number, lexer.token_start_line_pos, err_str));
+          errors.push(format!("Error at {}:{}: {}",
+              lexer.cur_line_number,
+              lexer.cur_line_pos,
+              err_str));
+
+          lexer.find_next_whitespace();
+
         }
       },
       None => break,
     }
   }
 
-  Ok(tokens)
+
+
+  if errors.is_empty() {
+    Ok(tokens)
+  } else {
+    Err(errors)
+  }
+
 }
 
 struct Lexer<'a> {
@@ -455,6 +469,28 @@ impl<'a> Lexer<'a> {
           ' ' | '\n' | '\t' => self.next_char(),
           _ => break,
         },
+        None => break,
+      };
+    }
+  }
+
+  // used when recovering from error; skip all characters until next whitespace
+  fn find_next_whitespace(&mut self) {
+    // workaround for multiple mutable borrows
+
+    loop {
+      let mut value: Option<char>;
+      {
+        value = match self.iter.peek() {
+          Some(ch) => Some(*ch),
+          None => None,
+        }
+      }
+      match value {
+        Some(ch) => match ch {
+          ' ' | '\n' | '\t' => break,
+          _ => self.next_char(),
+          },
         None => break,
       };
     }

@@ -28,7 +28,12 @@ fn main() {
                 };
               }
             }
-            Err(err) => println!("Error: {}", err),
+            Err(errors) => {
+              println!("Error(s) were found:");
+              for error in errors.iter() {
+                println!("{}", error)
+              }
+            }
           };
 
         },
