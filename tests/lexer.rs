@@ -460,6 +460,20 @@ fn parenthesis_brackets_braces_are_tokenized_correctly() {
 }
 
 #[test]
+fn comma_semi_colon_and_colon_are_tokenized_correctly() {
+  let string = ";:, ";
+  match tokenize(string) {
+    Ok(mut tokens) => {
+      assert_eq!(3, tokens.token_count());
+      assert!(generic_helper(&mut tokens, TokenType::SemiColon));
+      assert!(generic_helper(&mut tokens, TokenType::Colon));
+      assert!(generic_helper(&mut tokens, TokenType::Comma));
+    },
+    Err(..) => assert!(false),
+    }
+  }
+
+#[test]
 fn assignment_and_comparison_operators_are_tokenized_correctly() {
   let string = "= == < > <= >= < = > = = = !=";
 
@@ -495,7 +509,7 @@ fn function_call_syntax_is_tokenized_correctly() {
       assert!(identifier_helper(&mut tokens, "foo"));
       assert!(generic_helper(&mut tokens, TokenType::LParen));
       assert!(identifier_helper(&mut tokens, "ident_1"));
-      assert!(generic_helper(&mut tokens, TokenType::Colon));
+      assert!(generic_helper(&mut tokens, TokenType::Comma));
       assert!(identifier_helper(&mut tokens, "ident_2"));
       assert!(generic_helper(&mut tokens, TokenType::RParen));
       assert!(generic_helper(&mut tokens, TokenType::SemiColon));
