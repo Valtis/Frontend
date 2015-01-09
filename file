@@ -1,6 +1,6 @@
 // this is a test file for lexer and parser
 
-fn main(a:int, b:double, c:float, d:bool) {
+fn main(a:int, b:double, c:float, d:bool), {
   
 }
 

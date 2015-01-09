@@ -53,7 +53,7 @@ impl Parser {
     match token.t_type {
       TokenType::Fn => self.parse_function(),
       _ => Err(format!("Invalid token {}. Expected token Fn",
-          token.pos_at_line)),
+          token.t_type)),
     }
   }
 

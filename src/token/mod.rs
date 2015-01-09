@@ -1,5 +1,5 @@
 use std::num::Float;
-
+use std::fmt;
 #[derive(Eq, PartialEq, Show, Copy)]
 pub enum TokenType {
   Assign,
@@ -32,6 +32,44 @@ pub enum TokenType {
   Private,
   VarType,
 }
+
+impl fmt::String for TokenType {
+  fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fmt::String::fmt(
+      match *self {
+        TokenType::Assign => "Assign",
+        TokenType::ArithOp => "Arithmetic operator",
+        TokenType::CompOp => "Comparison operator",
+        TokenType::Number => "Number",
+        TokenType::Text => "Text",
+        TokenType::Identifier => "Identifier",
+        TokenType::LParen => "Left parenthesis",
+        TokenType::RParen => "Right parenthesis",
+        TokenType::LBrace => "Left brace",
+        TokenType::RBrace => "Right brace",
+        TokenType::LBracket => "Left bracket",
+        TokenType::RBracket => "Right bracket",
+        TokenType::Comma => "Comma",
+        TokenType::SemiColon => "Semicolon",
+        TokenType::Colon => "Colon",
+        TokenType::If => "If",
+        TokenType::Else => "Else",
+        TokenType::While => "While",
+        TokenType::For => "For",
+        TokenType::Let => "Let",
+        TokenType::Fn => "Fn",
+        TokenType::Return => "Return",
+        TokenType::Boolean => "Boolean",
+        TokenType::New => "New",
+        TokenType::Class => "class",
+        TokenType::Public => "Public",
+        TokenType::Protected => "Protected",
+        TokenType::Private => "Private",
+        TokenType::VarType => "Variable type",
+
+        }, formatter)
+      }
+    }
 
 #[derive(PartialEq, Show)]
 pub enum TokenSubType {
@@ -153,13 +191,13 @@ impl Tokens {
   pub fn expect(&mut self, token_type: TokenType) -> Result<SyntaxToken, String> {
     if self.invalid_pos() {
       Err(format!("Error: Token was not of expected type {}. No token found",
-      /* token_type */ "PLACEHOLDER pending fix"))
+       token_type))
     } else if self.tokens[self.pos].t_type == token_type {
       self.pos += 1;
       Ok(self.tokens[self.pos - 1])
     } else {
       Err(format!("Error: Token was not of expected type {}. Was actually {}",
-      /*token_type, self.tokens[self.pos].t_type */ "PLACEHOLDER PENDING FIX", "PLACEHOLDER PENDING FIX"))
+      token_type, self.tokens[self.pos].t_type))
     }
   }
 
