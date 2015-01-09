@@ -99,6 +99,26 @@ impl Parser {
   }
 
   fn parse_function_argument_list(&mut self) -> Result<String, String> {
+    try!(self.parse_function_parameter());
+
+    match self.tokens.peek() {
+      Some(token) => {
+        match token.t_type {
+          TokenType::Comma => { self.tokens.next(); self.parse_function_argument_list() },
+          _ => Ok("Placeholder".to_string()),
+        }
+      }
+      None => Err("Unexpected end of file".to_string()),
+    }
+
+  }
+
+  fn parse_function_parameter(&mut self) -> Result<String, String> {
+
+    try!(self.tokens.expect(TokenType::Identifier));
+    try!(self.tokens.expect(TokenType::Colon));
+    try!(self.tokens.expect(TokenType::VarType));
+
     Ok("placeholder".to_string())
   }
 

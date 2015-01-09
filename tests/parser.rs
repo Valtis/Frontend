@@ -66,3 +66,88 @@ fn parser_errors_on_parameterless_function_without_right_parenthesis() {
     Err(..) => assert!(true),
   }
 }
+
+
+
+#[test]
+fn parser_accepts_function_with_single_parameter_correctly() {
+  let tokens = tokenize("fn func(a:int) { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn parser_accepts_function_with_multiple_parameters_correctly() {
+  let tokens = tokenize("fn func(a:int, b:double, c:float, d:bool) { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+
+#[test]
+fn parser_errors_on_function_with_missing_parameter() {
+  let tokens = tokenize("fn func(a:int, ) {}").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
+
+
+#[test]
+fn parser_errors_on_function_with_parameter_separator_but_no_parameters() {
+  let tokens = tokenize("fn func(,)").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
+
+
+#[test]
+fn parser_errors_on_function_with_parameter_missing_type() {
+  let tokens = tokenize("fn func(a:int, b:double, c, d:bool)").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
+
+#[test]
+fn parser_errors_on_function_with_parameter_missing_colon() {
+  let tokens = tokenize("fn func(a:int, bdouble )").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
+
+#[test]
+fn parser_errors_on_function_with_parameters_and_missing_left_parenthesis() {
+  let tokens = tokenize("fn func a:int, b:double, c:float, d:bool) { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
+
+#[test]
+fn parser_errors_on_function_with_parameters_and_missing_right_parenthesis() {
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
