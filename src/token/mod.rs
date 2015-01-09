@@ -35,11 +35,11 @@ pub enum TokenType {
 
 #[derive(PartialEq, Show)]
 pub enum TokenSubType {
-  Text(uint), // index to text table
+  Text(usize), // index to text table
   FloatNumber(f32),
   DoubleNumber(f64),
   IntegerNumber(i32),
-  Identifier(uint), // index to text table
+  Identifier(usize), // index to text table
   BooleanValue(bool),
   FloatType,
   DoubleType,
@@ -112,7 +112,7 @@ impl SyntaxToken {
 pub struct Tokens {
   text_table:Vec<String>,
   tokens: Vec<SyntaxToken>,
-  pos: uint,
+  pos: usize,
 }
 
 impl Tokens {
@@ -125,7 +125,7 @@ impl Tokens {
     self.text_table = text_table;
   }
 
-  pub fn get_text(&self, index: uint) -> &str {
+  pub fn get_text(&self, index: usize) -> &str {
     self.text_table[index].as_slice()
   }
 
@@ -153,17 +153,17 @@ impl Tokens {
   pub fn expect(&mut self, token_type: TokenType) -> Result<SyntaxToken, String> {
     if self.invalid_pos() {
       Err(format!("Error: Token was not of expected type {}. No token found",
-      token_type))
+      /* token_type */ "PLACEHOLDER pending fix"))
     } else if self.tokens[self.pos].t_type == token_type {
       self.pos += 1;
       Ok(self.tokens[self.pos - 1])
     } else {
       Err(format!("Error: Token was not of expected type {}. Was actually {}",
-      token_type, self.tokens[self.pos].t_type))
+      /*token_type, self.tokens[self.pos].t_type */ "PLACEHOLDER PENDING FIX", "PLACEHOLDER PENDING FIX"))
     }
   }
 
-  pub fn token_count(&self) -> uint {
+  pub fn token_count(&self) -> usize {
     self.tokens.len()
   }
 

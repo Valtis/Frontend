@@ -367,7 +367,7 @@ fn string_followed_by_identifier_is_handled_correctly() {
       assert!(string_helper(&mut tokens, "this is text 1234 _ öö"));
       assert!(identifier_helper(&mut tokens, "and_this_is_identifier"));
     }
-    Err(err) => { println!("{}", err); assert!(false); },
+    Err(err) => assert!(false),
   }
 }
 

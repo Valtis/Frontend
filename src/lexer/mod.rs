@@ -503,7 +503,7 @@ impl<'a> Lexer<'a> {
     }
   }
 
-  fn add_text_to_table(&mut self, new_text: String) -> uint {
+  fn add_text_to_table(&mut self, new_text: String) -> usize {
     let mut pos = 0;
     while pos < self.text_table.len() {
       if self.text_table[pos] == new_text {
