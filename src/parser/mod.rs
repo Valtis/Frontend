@@ -148,6 +148,7 @@ impl Parser {
         match (token.t_type) {
           TokenType::SemiColon => { self.tokens.next(); /* empty statement, skip */}
           TokenType::Let => { self.parse_variable_declaration(); },
+          TokenType::LBrace => { self.parse_block(); }
           TokenType::RBrace => { return; /* end of block, return*/}
           _ => {
               self.register_error_and_skip(
@@ -197,10 +198,10 @@ impl Parser {
 
   fn parse_expression(&mut self) {
 
-    match self.tokens.next() {
+    match self.tokens.peek() {
       Some(token) => {
         match (token.t_type) {
-          TokenType::Number | TokenType::Text | TokenType::Boolean  => { return; },
+          TokenType::Number | TokenType::Text | TokenType::Boolean  => { self.tokens.next(); return; },
           _ => self.register_error_and_skip(
             format!("Unexpected token {} when expecting start of expression", token.t_type),
             &token,
