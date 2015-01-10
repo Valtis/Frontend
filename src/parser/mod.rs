@@ -222,7 +222,7 @@ impl Parser {
           true
         } else {
           self.register_error(
-            format!("Error: Token was not of expected type {}. Was actually {}",
+            format!("Token was not of expected type {}. Was actually {}",
               expected_type, token.t_type),
             &token);
 
@@ -231,7 +231,7 @@ impl Parser {
       },
       None => {
         self.errors.push(
-          format!("Error: Expected token of type {}. Instead found end-of-file",
+          format!("Expected token of type {}. Instead found end-of-file",
             expected_type));
 
         false

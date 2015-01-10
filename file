@@ -17,6 +17,7 @@ fn main(a:int, b:int, c:int) {
     {
     	{
 	  let dasds:float = 234;
+          let f = 3;
     	}
     }	
   }	
