@@ -2,6 +2,10 @@ use token::Tokens;
 use token::SyntaxToken;
 use token::TokenType;
 use token::TokenSubType;
+/*
+  Recursive descent parser that for now merely checks if input conforms to
+  grammar. No syntax tree is built.
+*/
 
 
 // first string param serves as a placeholder for abstract syntax tree
@@ -14,164 +18,250 @@ pub fn parse(tokens: Tokens) -> Result<String, Vec<String>> {
 
 struct Parser {
   tokens: Tokens,
+  errors: Vec<String>,
 }
 
 
 impl Parser {
   fn new(tokens: Tokens) -> Parser {
-    Parser { tokens: tokens }
+    Parser { tokens: tokens, errors: Vec::new() }
   }
 
   fn parse(&mut self) -> Result<String, Vec<String>> {
-    let mut errors: Vec<String> = Vec::new();
+
     loop {
       let mut next_token:Option<SyntaxToken>;
-
       {
         next_token = self.tokens.next();
       }
 
       match next_token {
-        Some(token) => match self.parse_start_token(token) {
-          Ok(..) => { /* handle correct parse */ },
-          Err(err) => {
-            errors.push(err);
-          }
-        },
+        Some(token) => self.parse_start_token(token),
         None => break,
       }
     }
 
-    if errors.is_empty() {
+    if self.errors.is_empty() {
       Ok("Placeholder".to_string())
     } else {
-      Err(errors)
+      Err(self.errors.clone())
     }
   }
 
-  fn parse_start_token(&mut self, token: SyntaxToken) -> Result<String, String> {
+  fn parse_start_token(&mut self, token: SyntaxToken) {
     match token.t_type {
-      TokenType::Fn => self.parse_function(),
-      _ => Err(format!("Invalid token {}. Expected token Fn",
-          token.t_type)),
-    }
-  }
-
-
-  fn parse_function(&mut self) -> Result<String, String> {
-    match self.tokens.expect(TokenType::Identifier) {
-      Ok(..) => {
-        try!(self.parse_optional_function_arguments());
-        try!(self.parse_block());
-        Ok("placeholder".to_string())
+      TokenType::Fn => { self.parse_function(); },
+      _ => {
+        self.register_error_and_skip(
+          format!("Invalid token {}. Expected token Fn", token.t_type),
+          &token,
+          vec![TokenType::Fn]);
       },
-      Err(err) => Err(err),
     }
   }
 
-  fn parse_optional_function_arguments(&mut self) -> Result<String, String> {
-    try!(self.tokens.expect(TokenType::LParen));
+
+  fn parse_function(&mut self) {
+    self.expect(TokenType::Identifier);
+
+    self.parse_optional_function_arguments();
+    self.parse_block();
+  }
+
+  fn parse_optional_function_arguments(&mut self) {
+
+    if !self.expect(TokenType::LParen) {
+      self.skip_to_one_of(vec![TokenType::LBrace]);
+      return;
+    }
 
     match self.tokens.peek() {
       Some(token) => {
         match token.t_type {
           TokenType::RParen => {
-            try!(self.tokens.expect(TokenType::RParen));
-            Ok("Placeholder".to_string())
+            self.tokens.next();
           },
-          _ => self.result_for_function_argument_list_parsing(),
+          _ => {
+            self.parse_function_argument_list();
+            if !self.expect(TokenType::RParen) {
+              self.skip_to_one_of(vec![TokenType::LBrace]);
+            }
+
+          },
         }
       },
-      None => Err("Unexpected end of file: Expected token RParen".to_string()),
+      None => {
+        self.errors.push("Unexpected end of file: Expected token RParen".to_string());
+        self.skip_to_one_of(vec![TokenType::LBrace]);
+      }
     }
   }
 
-  fn result_for_function_argument_list_parsing(&mut self) -> Result<String, String> {
-
-    match self.parse_function_argument_list() {
-      Ok(val) => {
-        try!(self.tokens.expect(TokenType::RParen));
-        Ok("placeholder".to_string())
-      },
-      Err(err) => Err(err),
-    }
-  }
-
-  fn parse_function_argument_list(&mut self) -> Result<String, String> {
-    try!(self.parse_function_parameter());
+  fn parse_function_argument_list(&mut self) {
+    self.parse_function_parameter();
 
     match self.tokens.peek() {
       Some(token) => {
-        match token.t_type {
-          TokenType::Comma => { self.tokens.next(); self.parse_function_argument_list() },
-          _ => Ok("Placeholder".to_string()),
+        if token.t_type == TokenType::Comma {
+          self.tokens.next();
+          self.parse_function_argument_list()
         }
-      }
-      None => { Ok("placeholder".to_string()) },
+      },
+      None => { },
+    }
+  }
+
+  fn parse_function_parameter(&mut self) {
+
+    if !self.expect(TokenType::Identifier) {
+      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen]);
+      return;
     }
 
+    if !self.expect(TokenType::Colon) {
+      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen]);
+      return;
+    }
+
+    if !self.expect(TokenType::VarType) {
+      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen]);
+      return;
+    }
   }
 
-  fn parse_function_parameter(&mut self) -> Result<String, String> {
 
-    try!(self.tokens.expect(TokenType::Identifier));
-    try!(self.tokens.expect(TokenType::Colon));
-    try!(self.tokens.expect(TokenType::VarType));
+  fn parse_block(&mut self)  {
 
-    Ok("placeholder".to_string())
+    if !self.expect(TokenType::LBrace) {
+      self.skip_to_one_of(vec![TokenType::RBrace]);
+
+    }
+    self.parse_statements();
+
+    self.expect(TokenType::RBrace);
   }
 
+  fn parse_statements(&mut self)  {
 
-  fn parse_block(&mut self) -> Result<String, String> {
-    try!(self.tokens.expect(TokenType::LBrace));
-
-    try!(self.parse_statements());
-
-    try!(self.tokens.expect(TokenType::RBrace));
-
-    Ok("Placeholder".to_string())
-  }
-
-  fn parse_statements(&mut self) -> Result<String, String> {
     match self.tokens.peek() {
       Some(token) => {
         match (token.t_type) {
-          TokenType::Let => { try!(self.parse_variable_declaration()); },
-          _ => { return Ok("Placeholder".to_string()); }
-        }
+          TokenType::SemiColon => { self.tokens.next(); /* empty statement, skip */}
+          TokenType::Let => { self.parse_variable_declaration(); },
+          TokenType::RBrace => { return; /* end of block, return*/}
+          _ => {
+              self.register_error_and_skip(
+                format!("Unexpected token {} when expecting start of statement",
+                  token.t_type),
+                &token,
+                vec![TokenType::RBrace, TokenType::SemiColon]);
+            }
+          }
       },
-      None => { return Ok("Placeholder".to_string());  }
+      None => { return;/* empty statement list, end. Let the above level handle it*/ }
     }
 
-    self.parse_statements()
+    self.parse_statements();
   }
 
-  fn parse_variable_declaration(&mut self) -> Result<String, String> {
-    try!(self.tokens.expect(TokenType::Let));
-    try!(self.tokens.expect(TokenType::Identifier));
-    try!(self.tokens.expect(TokenType::Colon));
-    try!(self.tokens.expect(TokenType::VarType));
-    try!(self.tokens.expect(TokenType::Assign));
+  fn parse_variable_declaration(&mut self) {
+    if !self.expect(TokenType::Let) {
+      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      return;
+    }
+    if !self.expect(TokenType::Identifier) {
+      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      return;
+    }
+    if !self.expect(TokenType::Colon) {
+      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      return;
+    }
+    if !self.expect(TokenType::VarType) {
+      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      return;
+    }
 
-    try!(self.parse_expression());
+    if !self.expect(TokenType::Assign) {
+      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      return;
+    }
 
-    try!(self.tokens.expect(TokenType::SemiColon));
+    self.parse_expression();
 
+    if !self.expect(TokenType::SemiColon) {
+      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+    }
 
-    Ok("placeholder".to_string())
   }
 
-  fn parse_expression(&mut self) -> Result<String, String> {
+  fn parse_expression(&mut self) {
 
     match self.tokens.next() {
       Some(token) => {
         match (token.t_type) {
-          TokenType::Number | TokenType::Text  => Ok("Placeholder".to_string()),
-          _ => Err(format!("Unexpected token { } ", token.t_type))
+          TokenType::Number | TokenType::Text | TokenType::Boolean  => { return; },
+          _ => self.register_error_and_skip(
+            format!("Unexpected token {} when expecting start of expression", token.t_type),
+            &token,
+            vec![TokenType::SemiColon, TokenType::RBrace]),
         }
       },
-      None => { return Ok("Placeholder".to_string());  }
+      None => {
+        self.errors.push("Unexpected end of file: Expected expression".to_string());
+      }
     }
   }
 
+  fn expect(&mut self, expected_type: TokenType) -> bool {
+    match self.tokens.peek() {
+      Some(token) => {
+        if expected_type == token.t_type {
+          self.tokens.next();
+          true
+        } else {
+          self.register_error(
+            format!("Error: Token was not of expected type {}. Was actually {}",
+              expected_type, token.t_type),
+            &token);
+
+          false
+        }
+      },
+      None => {
+        self.errors.push(
+          format!("Error: Expected token of type {}. Instead found end-of-file",
+            expected_type));
+
+        false
+      },
+    }
+  }
+
+  fn register_error_and_skip(&mut self, msg: String, err_token: &SyntaxToken,
+     skip_tokens: Vec<TokenType>) {
+
+    self.register_error(msg, err_token);
+    self.skip_to_one_of(skip_tokens);
+  }
+
+  fn register_error(&mut self, msg:String, err_token: &SyntaxToken) {
+    self.errors.push(format!("Error at {}:{}: {}",
+      err_token.line, err_token.pos_at_line, msg));
+  }
+
+  fn skip_to_one_of(&mut self, skip_tokens: Vec<TokenType>) {
+    loop {
+      match self.tokens.peek() {
+        Some(token) => {
+          if skip_tokens.contains(&token.t_type) {
+            break;
+          } else {
+            self.tokens.next();
+          }
+        },
+        None => break,
+      }
+    }
+  }
 }

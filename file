@@ -1,6 +1,11 @@
 // this is a test file for lexer and parser
 
-fn main(a:int, b:double, c:float, d:bool) {
-  let e:int = 50;
-}
 
+fn main(a:int, b:int, c:int) {
+  let a:int = 5;
+  
+  let b = 6;
+  let c:float = "sd";
+  d = 23;
+  let f:bool = true;
+}

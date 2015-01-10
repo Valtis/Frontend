@@ -21,9 +21,9 @@ FUNCTION_PARAM -> identifier : TYPE
 
 BLOCK -> { STATEMENTS }
 
-STATEMENTS -> STATEMENT STATEMENTS | e
+STATEMENTS -> STATEMENT; STATEMENTS | e
 
-STATEMENT -> let identifier : TYPE = EXPRESSION ;
+STATEMENT -> let identifier : TYPE = EXPRESSION
 
 EXPRESSION = CONSTANT_VALUE
 
@@ -44,7 +44,7 @@ CONSTANT_VALUE = integer_token
 
 Error recovery
 
-On error, find next  block ("{") or end of current one "}", statement terminator (";") or top level token ("fn"). Error recovery is used purely so that parser may find more than single error when parsing, allowing faster error correction by user. No syntax tree is generated if errors are found. 
+On error, parser should emit a diagnostic message and skip to next valid same level construct and continue parsing.
 
 
 

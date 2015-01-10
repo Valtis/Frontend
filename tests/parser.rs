@@ -224,3 +224,16 @@ fn parse_errors_on_variable_declaration_with_missing_let() {
     Err(..) => assert!(true)
   }
 }
+
+#[test]
+fn parser_gives_correct_error_message_on_invalid_function_definition() {
+  let tokens = tokenize("invalid_dec(b:int) { }\nfn func (a:int) { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("1:1"));
+    }
+  }
+}

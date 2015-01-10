@@ -19,8 +19,8 @@ pub fn tokenize(content: &str) -> Result<Tokens, Vec<String>> {
         Ok(token) => tokens.push(token),
         Err(err_str) => {
           errors.push(format!("Error at {}:{}: {}",
-              lexer.cur_line_number,
-              lexer.cur_line_pos,
+              lexer.token_start_line_number,
+              lexer.token_start_line_pos,
               err_str));
 
           lexer.find_next_whitespace();

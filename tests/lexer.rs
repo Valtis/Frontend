@@ -591,8 +591,8 @@ fn multiple_errors_are_reported_correctly() {
       Ok(..) => assert!(false),
       Err(errors) => {
         assert_eq!(2, errors.len());
-        assert!(errors[0].contains("1:10"));
-        assert!(errors[1].contains("2:8"));
+        assert!(errors[0].contains("1:8"));
+        assert!(errors[1].contains("2:2"));
       }
     }
 }
