@@ -61,10 +61,9 @@ impl Parser {
   fn parse_function(&mut self) -> Result<String, String> {
     match self.tokens.expect(TokenType::Identifier) {
       Ok(..) => {
-        let ret_val = try!(self.parse_optional_function_arguments());
-        try!(self.tokens.expect(TokenType::LBrace));
-        try!(self.tokens.expect(TokenType::RBrace));
-        Ok(ret_val)
+        try!(self.parse_optional_function_arguments());
+        try!(self.parse_block());
+        Ok("placeholder".to_string())
       },
       Err(err) => Err(err),
     }
@@ -108,7 +107,7 @@ impl Parser {
           _ => Ok("Placeholder".to_string()),
         }
       }
-      None => Err("Unexpected end of file".to_string()),
+      None => { Ok("placeholder".to_string()) },
     }
 
   }
@@ -120,6 +119,59 @@ impl Parser {
     try!(self.tokens.expect(TokenType::VarType));
 
     Ok("placeholder".to_string())
+  }
+
+
+  fn parse_block(&mut self) -> Result<String, String> {
+    try!(self.tokens.expect(TokenType::LBrace));
+
+    try!(self.parse_statements());
+
+    try!(self.tokens.expect(TokenType::RBrace));
+
+    Ok("Placeholder".to_string())
+  }
+
+  fn parse_statements(&mut self) -> Result<String, String> {
+    match self.tokens.peek() {
+      Some(token) => {
+        match (token.t_type) {
+          TokenType::Let => { try!(self.parse_variable_declaration()); },
+          _ => { return Ok("Placeholder".to_string()); }
+        }
+      },
+      None => { return Ok("Placeholder".to_string());  }
+    }
+
+    self.parse_statements()
+  }
+
+  fn parse_variable_declaration(&mut self) -> Result<String, String> {
+    try!(self.tokens.expect(TokenType::Let));
+    try!(self.tokens.expect(TokenType::Identifier));
+    try!(self.tokens.expect(TokenType::Colon));
+    try!(self.tokens.expect(TokenType::VarType));
+    try!(self.tokens.expect(TokenType::Assign));
+
+    try!(self.parse_expression());
+
+    try!(self.tokens.expect(TokenType::SemiColon));
+
+
+    Ok("placeholder".to_string())
+  }
+
+  fn parse_expression(&mut self) -> Result<String, String> {
+
+    match self.tokens.next() {
+      Some(token) => {
+        match (token.t_type) {
+          TokenType::Number | TokenType::Text  => Ok("Placeholder".to_string()),
+          _ => Err(format!("Unexpected token { } ", token.t_type))
+        }
+      },
+      None => { return Ok("Placeholder".to_string());  }
+    }
   }
 
 }

@@ -249,6 +249,7 @@ impl<'a> Lexer<'a> {
       "double" => Some(self.create_token(TokenType::VarType, TokenSubType::DoubleType)),
       "bool" => Some(self.create_token(TokenType::VarType, TokenSubType::BooleanType)),
       "void" => Some(self.create_token(TokenType::VarType, TokenSubType::VoidType)),
+      "string" => Some(self.create_token(TokenType::VarType, TokenSubType::StringType)),
       _ => None
     }
   }

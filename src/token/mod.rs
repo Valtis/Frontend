@@ -84,6 +84,7 @@ pub enum TokenSubType {
   IntegerType,
   BooleanType,
   VoidType,
+  StringType,
   Equals,
   Lesser,
   Greater,

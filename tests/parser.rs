@@ -151,3 +151,76 @@ fn parser_errors_on_function_with_parameters_and_missing_right_parenthesis() {
     Err(..) => assert!(true)
   }
 }
+
+#[test]
+fn parse_parses_single_variable_declaration_with_constant_value_correctly() {
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let a:int = 5; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn parse_parses_multiple_variable_declarations_with_constant_values_correctly() {
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool)
+    { let a:int = 5; let b:double = 0.434; let c:float = .343f;
+    let d:string = \"dasdad\"; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn parse_errors_on_variable_declaration_with_missing_semicolon() {
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let a:int = 5 }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
+
+#[test]
+fn parse_errors_on_variable_declaration_with_missing_type() {
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let a = 5; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
+
+#[test]
+fn parse_errors_on_variable_declaration_with_missing_name() {
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let :int = 5; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
+
+#[test]
+fn parse_errors_on_variable_declaration_with_missing_colon() {
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let aint = 5; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
+
+
+#[test]
+fn parse_errors_on_variable_declaration_with_missing_let() {
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { a:int = 5 }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
