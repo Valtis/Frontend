@@ -90,6 +90,51 @@ fn parser_accepts_function_with_multiple_parameters_correctly() {
 }
 
 #[test]
+fn parser_accepts_function_with_void_type() {
+  let tokens = tokenize("fn func(a:int, b:double, c:float, d:bool) : void { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+
+#[test]
+fn parser_accepts_function_with_int_type() {
+  let tokens = tokenize("fn func(a:int, b:double, c:float, d:bool) : int { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+
+#[test]
+fn parser_accepts_function_with_bool_type() {
+  let tokens = tokenize("fn func(a:int, b:double, c:float, d:bool) : bool { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+
+#[test]
+fn parser_accepts_function_with_string_type() {
+  let tokens = tokenize("fn func(a:int, b:double, c:float, d:bool) : string { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+
+
+#[test]
 fn parser_errors_on_function_with_void_parameter() {
   let tokens = tokenize("fn func(a:int, b:void) {}").unwrap();
 

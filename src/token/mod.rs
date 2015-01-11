@@ -61,11 +61,11 @@ impl fmt::String for TokenType {
         TokenType::Return => "Return",
         TokenType::Boolean => "Boolean",
         TokenType::New => "New",
-        TokenType::Class => "class",
+        TokenType::Class => "Class",
         TokenType::Public => "Public",
         TokenType::Protected => "Protected",
         TokenType::Private => "Private",
-        TokenType::VarType => "type",
+        TokenType::VarType => "Type",
 
       }, formatter)
   }

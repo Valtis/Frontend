@@ -3,12 +3,11 @@
 
 
 
-fn main(a:int, b:int, c:int) {
+fn main(a:int, b:int, c:int) : ant {
   let a:int = 5;
   
   let c:float = "sd";
   let f:bool = true; 
-  34344f;
   {
     ;;;;;
     let f:bool = "ererere";
@@ -16,9 +15,18 @@ fn main(a:int, b:int, c:int) {
     }
     {
     	{
-	  let dasds:void = 234;
+	  let dasds:int = 234;
           let f:int = 3;
     	}
     }	
   }	
+}
+
+fn foo() : void {
+
+}
+
+
+fn bar() {
+
 }

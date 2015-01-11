@@ -3,11 +3,12 @@ Notes:
 -Lowercase text are terminals, uppercase are nonterminals 
 -whitespace is non-significant
 -this is work in progress and is expanded as needed
+-function return type is considered to be 'void' if no return type is specified
 
 
 S -> FUNCTION S | e
 
-FUNCTION -> fn PARAM_LIST : ANY_TYPE BLOCK
+FUNCTION -> fn PARAM_LIST OPTIONAL_RETURN_TYPE BLOCK
 
 PARAM_LIST -> ( OPT_FUNCTION_PARAMS )
 
@@ -18,6 +19,8 @@ FUNCTION_PARAMS -> FUNCTION_PARAM
                  | FUNCTION_PARAM, FUNCTION_PARAMS 
                  
 FUNCTION_PARAM -> identifier : VALUE_TYPE
+
+OPTIONAL_RETURN_TYPE : ANY_TYPE | e
 
 BLOCK -> { STATEMENTS }
 

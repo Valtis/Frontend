@@ -68,6 +68,7 @@ impl Parser {
     self.expect(TokenType::Identifier);
 
     self.parse_optional_function_arguments();
+    self.parse_optional_return_type();
     self.parse_block();
   }
 
@@ -131,11 +132,26 @@ impl Parser {
   }
 
 
+  fn parse_optional_return_type(&mut self) {
+    match self.tokens.peek() {
+      Some(token) => {
+        if token.t_type == TokenType::Colon {
+          self.tokens.next();
+
+          if !self.parse_any_type() {
+            self.skip_to_one_of(vec![TokenType::LBrace]);
+          }
+        }
+      },
+      None => { }
+    }
+  }
+
   fn parse_block(&mut self)  {
 
     if !self.expect(TokenType::LBrace) {
-      self.skip_to_one_of(vec![TokenType::RBrace]);
-
+      self.skip_to_one_of(vec![TokenType::LBrace]);
+      self.tokens.next();
     }
     self.parse_statements();
 
@@ -211,7 +227,7 @@ impl Parser {
               format!("Unexpected token {} when expecting start of expression",
                 token_str),
               &token,
-              vec![TokenType::SemiColon, TokenType::RBrace])
+              vec![TokenType::SemiColon, TokenType::RBrace, TokenType::LBrace])
             },
         }
       },
@@ -247,8 +263,8 @@ impl Parser {
     }
   }
 
-  fn parse_any_type(&mut self) {
-    self.expect(TokenType::VarType);
+  fn parse_any_type(&mut self) -> bool {
+    self.expect(TokenType::VarType)
   }
 
   fn parse_value_type(&mut self) -> bool {
