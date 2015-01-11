@@ -52,10 +52,13 @@ impl Parser {
     match token.t_type {
       TokenType::Fn => { self.parse_function(); },
       _ => {
+        let token_str = self.tokens.to_string(&token);
+
         self.register_error_and_skip_to(
-          format!("Invalid token {}. Expected token {}", token, TokenType::Fn),
-          &token,
-          vec![TokenType::Fn]);
+          format!(
+              "Invalid token {}. Expected token {}", token_str, TokenType::Fn),
+            &token,
+            vec![TokenType::Fn]);
       },
     }
   }
@@ -149,9 +152,10 @@ impl Parser {
           TokenType::LBrace => { self.parse_block(); }
           TokenType::RBrace => { return; /* end of block, return*/}
           _ => {
+              let token_str = self.tokens.to_string(&token);
               self.register_error_and_skip_to(
                 format!("Unexpected token {} when expecting start of statement",
-                  token),
+                  token_str),
                 &token,
                 vec![TokenType::RBrace, TokenType::SemiColon]);
             }
@@ -201,10 +205,14 @@ impl Parser {
       Some(token) => {
         match (token.t_type) {
           TokenType::Number | TokenType::Text | TokenType::Boolean  => { self.tokens.next(); return; },
-          _ => self.register_error_and_skip_to(
-            format!("Unexpected token {} when expecting start of expression", token),
-            &token,
-            vec![TokenType::SemiColon, TokenType::RBrace]),
+          _ => {
+            let token_str = self.tokens.to_string(&token);
+            self.register_error_and_skip_to(
+              format!("Unexpected token {} when expecting start of expression",
+                token_str),
+              &token,
+              vec![TokenType::SemiColon, TokenType::RBrace])
+            },
         }
       },
       None => {
@@ -220,9 +228,10 @@ impl Parser {
           self.tokens.next();
           true
         } else {
+          let token_str = self.tokens.to_string(&token);
           self.register_error(
             format!("Token was not of expected type {}. Was actually {}",
-              expected_type, token),
+              expected_type, token_str),
             &token);
 
           false
@@ -247,17 +256,20 @@ impl Parser {
       Some(token) => {
         if token.t_type == TokenType::VarType {
           if token.t_subtype == TokenSubType::VoidType {
+            let token_str = self.tokens.to_string(&token);
             self.register_error(
               format!("Expected a value type parameter, instead found {}",
-              token),
+              token_str),
               &token);
               false
           } else {
             true
           }
         } else {
+          let token_str = self.tokens.to_string(&token);
           self.register_error(
-            format!("Expected a type parameter, instead found {}", token),
+            format!("Expected a type parameter, instead found {}",
+              token_str),
             &token);
             false
         }
