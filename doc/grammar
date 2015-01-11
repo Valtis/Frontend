@@ -31,7 +31,21 @@ STATEMENT -> VARIABLE_DECLARATION
 
 VARIABLE_DECLARATION -> let identifier : VALUE_TYPE = EXPRESSION
 
-EXPRESSION = CONSTANT_VALUE
+EXPRESSION -> TERM PLUS_MINUS_EXPRESSION
+
+PLUS_MINUS_EXPRESSION ->  + TERM PLUS_MINUS_EXPRESSION
+		        | - TERM PLUS_MINUS_EXPRESSION
+                        | e
+
+TERM -> FACTOR MULT_DIV_TERM
+
+MULT_DIV_TERM -> * FACTOR MULT_DIV_TERM
+               | / FACTOR MULT_DIV_TERM
+               | e
+
+FACTOR -> ( EXPRESSION ) 
+        | identifier 
+        | CONSTANT_VALUE
 
 
 VALUE_TYPE -> int_type
@@ -42,12 +56,13 @@ VALUE_TYPE -> int_type
 
 ANY_TYPE -> VALUE_TYPE | void_type
 
-CONSTANT_VALUE = integer_token
-               | float_token
-               | double_token
-               | boolean_token
-               | string_token  
+CONSTANT_VALUE -> integer_token
+                | float_token
+                | double_token
+                | boolean_token
+                | string_token  
 
+	note on CONSTANT_VALUE: for numbers, +/- are valid start tokens (eg. "+" token followed by a int/float/double would be accepted)
 
 
 Error recovery

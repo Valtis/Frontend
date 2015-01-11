@@ -5,6 +5,8 @@ use token::TokenSubType;
 /*
   Recursive descent parser that for now merely checks if input conforms to
   grammar. No syntax tree is built.
+
+  Check documentation for grammar.
 */
 
 
@@ -216,26 +218,91 @@ impl Parser {
   }
 
   fn parse_expression(&mut self) {
+    self.parse_term();
+    self.parse_plus_minus_expression();
+  }
 
+  fn parse_plus_minus_expression(&mut self) {
     match self.tokens.peek() {
-      Some(token) => {
-        match (token.t_type) {
-          TokenType::Number | TokenType::Text | TokenType::Boolean  => { self.tokens.next(); return; },
-          _ => {
-            let token_str = self.tokens.to_string(&token);
-            self.register_error_and_skip_to(
-              format!("Unexpected token {} when expecting start of expression",
-                token_str),
-              &token,
-              vec![TokenType::SemiColon, TokenType::RBrace, TokenType::LBrace])
-            },
-        }
+      Some(token) => match token.t_subtype {
+        TokenSubType::Plus | TokenSubType::Minus => {
+          self.tokens.next();
+          self.parse_term();
+          self.parse_plus_minus_expression();
+        },
+        _ => { /* epsilon */ }
       },
-      None => {
-        self.errors.push("Unexpected end of file: Expected expression".to_string());
-      }
+      None => { },
     }
   }
+
+  fn parse_term(&mut self) {
+    self.parse_factor();
+    self.parse_mult_div_term();
+  }
+
+  fn parse_mult_div_term(&mut self) {
+    match self.tokens.peek() {
+      Some(token) => match token.t_subtype {
+        TokenSubType::Multiply | TokenSubType::Divide => {
+          self.tokens.next();
+          self.parse_factor();
+          self.parse_mult_div_term();
+          },
+        _ => { /* epsilon */ }
+        },
+        None => { },
+      }
+  }
+
+  fn parse_factor(&mut self) {
+    // helper function
+    let factor_err =  |&: parser:&mut Parser, token:&SyntaxToken| {
+
+      let token_str = parser.tokens.to_string(token);
+
+      parser.register_error(
+        format!("Invalid start of an expression: {}", token_str),
+      token);
+
+      parser.skip_to_one_of(vec![TokenType::SemiColon, TokenType::LBrace]);
+    };
+
+    match self.tokens.next() {
+      Some(token) => match token.t_type {
+        TokenType::ArithOp => {
+          // check if op is + or -, and if it is followed by a number. If so, accept.
+          match token.t_subtype {
+            TokenSubType::Plus | TokenSubType::Minus => {
+              match self.tokens.peek() {
+                Some(peek_token) => match peek_token.t_type {
+                  TokenType::Number => { self.tokens.next(); },
+                  _ => { factor_err(self, &token); },
+                },
+                None => factor_err(self, &token),
+              }
+            }
+            _ => factor_err(self, &token),
+          }
+
+        },
+        TokenType::Identifier => { /* accept */},
+        TokenType::Number | TokenType::Text | TokenType::Boolean => { /* accept*/},
+        TokenType::LParen => {
+          self.parse_expression();
+          if !self.expect(TokenType::RParen) {
+            self.skip_to_one_of(vec![TokenType::SemiColon, TokenType::LBrace]);
+          }
+        }
+        _ => {
+            factor_err(self, &token);
+          }
+      },
+      None => self.errors.push(
+        "Unexpected end of file when parsing expression".to_string()),
+    }
+  }
+
 
   fn expect(&mut self, expected_type: TokenType) -> bool {
     match self.tokens.peek() {

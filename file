@@ -3,13 +3,14 @@
 
 
 
-fn main(a:int, b:int, c:int) : ant {
-  let a:int = 5;
-  
-  let c:float = "sd";
-  let f:bool = true; 
+fn main(a:int, b:int, c:int) : int {
+ 	
+  let f:int = 5;
+  let a:int = 5 + 2*3 - 3*(4+5);
+  let b:int = -3*4+a;
+
+ 
   {
-    ;;;;;
     let f:bool = "ererere";
     {
     }
@@ -22,11 +23,4 @@ fn main(a:int, b:int, c:int) : ant {
   }	
 }
 
-fn foo() : void {
 
-}
-
-
-fn bar() {
-
-}

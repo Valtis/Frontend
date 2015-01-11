@@ -338,3 +338,70 @@ fn parser_gives_correct_error_message_on_invalid_function_definition_and_invalid
     }
   }
 }
+
+#[test]
+fn parser_accepts_arithmetic_expression() {
+  let tokens = tokenize("fn foo() { let a:int = 4 + +2 - -5 + 6*(7+1) - b; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(err) => assert!(false),
+  }
+}
+
+#[test]
+fn parser_errors_on_arithmetic_expression_with_missing_operator() {
+  let tokens = tokenize("fn foo() { let a:int = 5 6*(7+1) - b; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+
+      println!("{}", err[0]);
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("1:26"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_arithmetic_expression_with_too_many_left_parenthesis() {
+  let tokens = tokenize("fn foo() { let a:int = 5 + 6*((7+1) - b; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("1:40"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_arithmetic_expression_with_too_many_right_parenthesis() {
+  let tokens = tokenize("fn foo() { let a:int = 5 + 6*(7+1)) - b; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("1:35"));
+    }
+  }
+}
+
+
+
+#[test]
+fn parser_gives_correct_error_messages_on_two_different_arithmetic_expression_with_errors() {
+  let tokens = tokenize("fn foo() { let a:int = 5 + 6*(7+1)) - b;\nlet b:int = 5 }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(2, err.len());
+      assert!(err[0].contains("1:35"));
+      assert!(err[1].contains("2:15"));
+    }
+  }
+}
