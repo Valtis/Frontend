@@ -262,7 +262,7 @@ impl Parser {
       let token_str = parser.tokens.to_string(token);
 
       parser.register_error(
-        format!("Invalid start of an expression: {}", token_str),
+        format!("Invalid token {}. Expected one of identifier, constant or left parenthesis.", token_str),
       token);
 
       parser.skip_to_one_of(vec![TokenType::SemiColon, TokenType::LBrace]);
