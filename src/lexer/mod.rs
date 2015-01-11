@@ -474,7 +474,7 @@ impl<'a> Lexer<'a> {
 
       match value {
         Some(ch) => match ch {
-          ' ' | '\n' | '\t' => self.next_char(),
+          ' ' | '\n' | '\t' | '\r' => self.next_char(),
           _ => break,
         },
         None => break,
@@ -496,7 +496,7 @@ impl<'a> Lexer<'a> {
       }
       match value {
         Some(ch) => match ch {
-          ' ' | '\n' | '\t' => break,
+          ' ' | '\n' | '\t' | '\r' => break,
           _ => self.next_char(),
           },
         None => break,

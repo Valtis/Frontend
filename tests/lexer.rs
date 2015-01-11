@@ -597,6 +597,21 @@ fn multiple_errors_are_reported_correctly() {
     }
 }
 
+#[test]
+fn lexer_handles_windows_line_endings_correctly() {
+  let string ="ident\r\nident2\r\n  ident3";
+  match tokenize(string) {
+    Ok(mut tokens) => {
+      assert_eq!(3, tokens.token_count());
+
+      assert!(line_helper(&mut tokens, 1, 1));
+      assert!(line_helper(&mut tokens, 2, 1));
+      assert!(line_helper(&mut tokens, 3, 3));
+    },
+    Err(..) => assert!(false)
+  }
+}
+
 fn arith_op_helper(tokens: &mut Tokens, subtype:TokenSubType) -> bool {
 
   let expected = SyntaxToken::new(TokenType::ArithOp, subtype, 0 ,0);
