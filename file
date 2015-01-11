@@ -8,7 +8,7 @@ fn main(a:int, b:int, c:int) {
   
   let c:float = "sd";
   let f:bool = true; 
-
+  hurdur;
   {
     ;;;;;
     let f:bool = "ererere";
@@ -16,8 +16,8 @@ fn main(a:int, b:int, c:int) {
     }
     {
     	{
-	  let dasds:float = 234;
-          let f = 3;
+	  let dasds:void = 234;
+          let f:int = 3;
     	}
     }	
   }	

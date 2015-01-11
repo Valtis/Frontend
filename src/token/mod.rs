@@ -65,11 +65,11 @@ impl fmt::String for TokenType {
         TokenType::Public => "Public",
         TokenType::Protected => "Protected",
         TokenType::Private => "Private",
-        TokenType::VarType => "Variable type",
+        TokenType::VarType => "type",
 
-        }, formatter)
-      }
-    }
+      }, formatter)
+  }
+}
 
 #[derive(PartialEq, Show)]
 pub enum TokenSubType {
@@ -99,6 +99,42 @@ pub enum TokenSubType {
   NoSubType,
 }
 
+impl fmt::String for TokenSubType {
+  fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+
+      write!(formatter, "{}", match *self {
+          TokenSubType::Text(index) => "'to be implemented'".to_string(),
+          TokenSubType::FloatNumber(value) => value.to_string(),
+          TokenSubType::DoubleNumber(value) => value.to_string(),
+          TokenSubType::IntegerNumber(value) => value.to_string(),
+          TokenSubType::Identifier(index) => "'to be implemented'".to_string(),
+          TokenSubType::BooleanValue(value) => value.to_string(),
+          TokenSubType::FloatType => "float".to_string(),
+          TokenSubType::DoubleType => "double".to_string(),
+          TokenSubType::IntegerType => "int".to_string(),
+          TokenSubType::BooleanType => "bool".to_string(),
+          TokenSubType::VoidType => "void".to_string(),
+          TokenSubType::StringType => "string".to_string(),
+          TokenSubType::Equals => "==".to_string(),
+          TokenSubType::Lesser => "<".to_string(),
+          TokenSubType::Greater => ">".to_string(),
+          TokenSubType::GreaterOrEq => ">=".to_string(),
+          TokenSubType::LesserOrEq => "<=".to_string(),
+          TokenSubType::NotEq => "!=".to_string(),
+          TokenSubType::Assign => "=".to_string(),
+          TokenSubType::Plus => "+".to_string() ,
+          TokenSubType::Minus => "-".to_string(),
+          TokenSubType::Multiply => "*".to_string(),
+          TokenSubType::Divide => "/".to_string(),
+          TokenSubType::NoSubType => "".to_string(),
+
+        })
+
+
+  //  fmt::String::fmt("".to_string() , formatter)
+  }
+}
+
 impl Copy for TokenSubType {
 
 }
@@ -109,6 +145,12 @@ pub struct SyntaxToken {
   pub t_subtype: TokenSubType,
   pub line: i32,
   pub pos_at_line: i32
+}
+
+impl fmt::String for SyntaxToken {
+  fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fmt::String::fmt(&format!("{} {}", self.t_type, self.t_subtype), formatter)
+  }
 }
 
 

@@ -89,6 +89,15 @@ fn parser_accepts_function_with_multiple_parameters_correctly() {
   }
 }
 
+#[test]
+fn parser_errors_on_function_with_void_parameter() {
+  let tokens = tokenize("fn func(a:int, b:void) {}").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
 
 #[test]
 fn parser_errors_on_function_with_missing_parameter() {
@@ -214,6 +223,15 @@ fn parse_errors_on_variable_declaration_with_missing_colon() {
   }
 }
 
+#[test]
+fn parser_errors_on_variable_declaration_with_void_type() {
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let a:void = 5; }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(..) => assert!(true)
+  }
+}
 
 #[test]
 fn parse_errors_on_variable_declaration_with_missing_let() {

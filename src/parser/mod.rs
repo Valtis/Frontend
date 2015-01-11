@@ -52,8 +52,8 @@ impl Parser {
     match token.t_type {
       TokenType::Fn => { self.parse_function(); },
       _ => {
-        self.register_error_and_skip(
-          format!("Invalid token {}. Expected token Fn", token.t_type),
+        self.register_error_and_skip_to(
+          format!("Invalid token {}. Expected token {}", token, TokenType::Fn),
           &token,
           vec![TokenType::Fn]);
       },
@@ -91,7 +91,8 @@ impl Parser {
         }
       },
       None => {
-        self.errors.push("Unexpected end of file: Expected token RParen".to_string());
+        self.errors.push(format!("Unexpected end of file: Expected token {}",
+          TokenType::RParen));
         self.skip_to_one_of(vec![TokenType::LBrace]);
       }
     }
@@ -123,10 +124,7 @@ impl Parser {
       return;
     }
 
-    if !self.expect(TokenType::VarType) {
-      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen]);
-      return;
-    }
+    self.parse_value_type();
   }
 
 
@@ -151,9 +149,9 @@ impl Parser {
           TokenType::LBrace => { self.parse_block(); }
           TokenType::RBrace => { return; /* end of block, return*/}
           _ => {
-              self.register_error_and_skip(
+              self.register_error_and_skip_to(
                 format!("Unexpected token {} when expecting start of statement",
-                  token.t_type),
+                  token),
                 &token,
                 vec![TokenType::RBrace, TokenType::SemiColon]);
             }
@@ -178,7 +176,8 @@ impl Parser {
       self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
       return;
     }
-    if !self.expect(TokenType::VarType) {
+
+    if !self.parse_value_type() {
       self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
       return;
     }
@@ -202,8 +201,8 @@ impl Parser {
       Some(token) => {
         match (token.t_type) {
           TokenType::Number | TokenType::Text | TokenType::Boolean  => { self.tokens.next(); return; },
-          _ => self.register_error_and_skip(
-            format!("Unexpected token {} when expecting start of expression", token.t_type),
+          _ => self.register_error_and_skip_to(
+            format!("Unexpected token {} when expecting start of expression", token),
             &token,
             vec![TokenType::SemiColon, TokenType::RBrace]),
         }
@@ -223,7 +222,7 @@ impl Parser {
         } else {
           self.register_error(
             format!("Token was not of expected type {}. Was actually {}",
-              expected_type, token.t_type),
+              expected_type, token),
             &token);
 
           false
@@ -239,7 +238,39 @@ impl Parser {
     }
   }
 
-  fn register_error_and_skip(&mut self, msg: String, err_token: &SyntaxToken,
+  fn parse_any_type(&mut self) {
+    self.expect(TokenType::VarType);
+  }
+
+  fn parse_value_type(&mut self) -> bool {
+    match self.tokens.next() {
+      Some(token) => {
+        if token.t_type == TokenType::VarType {
+          if token.t_subtype == TokenSubType::VoidType {
+            self.register_error(
+              format!("Expected a value type parameter, instead found {}",
+              token),
+              &token);
+              false
+          } else {
+            true
+          }
+        } else {
+          self.register_error(
+            format!("Expected a type parameter, instead found {}", token),
+            &token);
+            false
+        }
+      },
+      None => {
+        self.errors
+            .push("Expected a type parameter, instead found end-of-file".to_string());
+        false
+      }
+    }
+  }
+
+  fn register_error_and_skip_to(&mut self, msg: String, err_token: &SyntaxToken,
      skip_tokens: Vec<TokenType>) {
 
     self.register_error(msg, err_token);

@@ -7,7 +7,7 @@ Notes:
 
 S -> FUNCTION S | e
 
-FUNCTION -> fn PARAM_LIST BLOCK
+FUNCTION -> fn PARAM_LIST : ANY_TYPE BLOCK
 
 PARAM_LIST -> ( OPT_FUNCTION_PARAMS )
 
@@ -17,7 +17,7 @@ OPT_FUNCTION_PARAMS -> FUNCTION_PARAMS
 FUNCTION_PARAMS -> FUNCTION_PARAM 
                  | FUNCTION_PARAM, FUNCTION_PARAMS 
                  
-FUNCTION_PARAM -> identifier : TYPE
+FUNCTION_PARAM -> identifier : VALUE_TYPE
 
 BLOCK -> { STATEMENTS }
 
@@ -26,16 +26,18 @@ STATEMENTS -> STATEMENT; STATEMENTS | e
 STATEMENT -> VARIABLE_DECLARATION 
 	     | BLOCK
 
-VARIABLE_DECLARATION -> let identifier : TYPE = EXPRESSION
+VARIABLE_DECLARATION -> let identifier : VALUE_TYPE = EXPRESSION
 
 EXPRESSION = CONSTANT_VALUE
 
 
-TYPE -> int_type
+VALUE_TYPE -> int_type
       | float_type
       | double_type
       | boolean_type
       | string_type 
+
+ANY_TYPE -> VALUE_TYPE | void_type
 
 CONSTANT_VALUE = integer_token
                | float_token
