@@ -20,18 +20,24 @@ fn parser_errors_on_parameterless_function_without_identifier() {
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true),
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:4"));
+    }
   }
 }
 
 
 #[test]
 fn parser_errors_on_parameterless_function_without_opened_block() {
-  let tokens = tokenize("fn func()  }").unwrap();
+  let tokens = tokenize("fn func() }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true),
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:11"));
+    }
   }
 }
 
@@ -41,7 +47,10 @@ fn parser_errors_on_parameterless_function_without_closed_block() {
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true),
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("end-of-file"));
+    }
   }
 }
 
@@ -52,7 +61,10 @@ fn parser_errors_on_parameterless_function_without_left_parenthesis() {
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true),
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:8"));
+    }
   }
 }
 
@@ -63,14 +75,17 @@ fn parser_errors_on_parameterless_function_without_right_parenthesis() {
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true),
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:10"));
+    }
   }
 }
 
 
 
 #[test]
-fn parser_accepts_function_with_single_parameter_correctly() {
+fn parser_accepts_function_with_single_parameter() {
   let tokens = tokenize("fn func(a:int) { }").unwrap();
 
   match parse(tokens) {
@@ -80,7 +95,7 @@ fn parser_accepts_function_with_single_parameter_correctly() {
 }
 
 #[test]
-fn parser_accepts_function_with_multiple_parameters_correctly() {
+fn parser_accepts_function_with_multiple_parameters() {
   let tokens = tokenize("fn func(a:int, b:double, c:float, d:bool) { }").unwrap();
 
   match parse(tokens) {
@@ -132,15 +147,16 @@ fn parser_accepts_function_with_string_type() {
   }
 }
 
-
-
 #[test]
 fn parser_errors_on_function_with_void_parameter() {
   let tokens = tokenize("fn func(a:int, b:void) {}").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:18"));
+    }
   }
 }
 
@@ -150,39 +166,51 @@ fn parser_errors_on_function_with_missing_parameter() {
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:16"));
+    }
   }
 }
 
 
 #[test]
 fn parser_errors_on_function_with_parameter_separator_but_no_parameters() {
-  let tokens = tokenize("fn func(,)").unwrap();
+  let tokens = tokenize("fn func(,) { }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:9"));
+    }
   }
 }
 
 
 #[test]
 fn parser_errors_on_function_with_parameter_missing_type() {
-  let tokens = tokenize("fn func(a:int, b:double, c, d:bool)").unwrap();
+  let tokens = tokenize("fn func(a:int, b:double, c, d:bool) { }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:27"));
+    }
   }
 }
 
 #[test]
 fn parser_errors_on_function_with_parameter_missing_colon() {
-  let tokens = tokenize("fn func(a:int, bdouble )").unwrap();
+  let tokens = tokenize("fn func(a:int, bdouble ) { }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:24"));
+    }
   }
 }
 
@@ -192,7 +220,10 @@ fn parser_errors_on_function_with_parameters_and_missing_left_parenthesis() {
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:9"));
+    }
   }
 }
 
@@ -202,7 +233,10 @@ fn parser_errors_on_function_with_parameters_and_missing_right_parenthesis() {
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:43"));
+    }
   }
 }
 
@@ -230,61 +264,79 @@ fn parse_parses_multiple_variable_declarations_with_constant_values_correctly() 
 
 #[test]
 fn parse_errors_on_variable_declaration_with_missing_semicolon() {
-  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let a:int = 5 }").unwrap();
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) {\n  let a:int = 5 }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("2:17"));
+    }
   }
 }
 
 #[test]
 fn parse_errors_on_variable_declaration_with_missing_type() {
-  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let a = 5; }").unwrap();
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) {\n  let a = 5; }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("2:9"));
+    }
   }
 }
 
 #[test]
 fn parse_errors_on_variable_declaration_with_missing_name() {
-  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let :int = 5; }").unwrap();
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) {\n  let :int = 5; }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("2:7"));
+    }
   }
 }
 
 #[test]
 fn parse_errors_on_variable_declaration_with_missing_colon() {
-  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let aint = 5; }").unwrap();
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) {\n  let aint = 5; }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("2:12"));
+    }
   }
 }
 
 #[test]
 fn parser_errors_on_variable_declaration_with_void_type() {
-  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let a:void = 5; }").unwrap();
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) {\n  let a:void = 5; }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("2:9"));
+    }
   }
 }
 
 #[test]
 fn parse_errors_on_variable_declaration_with_missing_let() {
-  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { a:int = 5; }").unwrap();
+  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) {\n  a:int = 5; }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
-    Err(..) => assert!(true)
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("2:3"));
+    }
   }
 }
 
@@ -298,18 +350,21 @@ fn parser_parses_blocks_inside_blocks_correctly() {
   }
 }
 
+
 #[test]
-fn parser_gives_correct_error_message_on_invalid_function_definition() {
-  let tokens = tokenize("invalid_dec(b:int) { }\nfn func (a:int) { }").unwrap();
+fn parser_gives_corret_error_messages_on_two_different_invalid_function_declarations() {
+  let tokens = tokenize("fn invalid_dec(b:int, ) {\n let a:int = 5; }\nfn (a:int) { }").unwrap();
 
   match parse(tokens) {
     Ok(..) => assert!(false),
     Err(err) => {
-      assert_eq!(1, err.len());
-      assert!(err[0].contains("1:1"));
+      assert_eq!(2, err.len());
+      assert!(err[0].contains("1:23"));
+      assert!(err[1].contains("3:4"));
     }
   }
 }
+
 
 #[test]
 fn parser_gives_correct_error_message_on_invalid_function_argument_definition_and_invalid_variable_declaration() {

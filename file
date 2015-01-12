@@ -1,23 +1,10 @@
 // this is a test file for lexer and parser
 
-fn main(a:int, b:int, c:int) : int {
- 	
-  let f:int = 5;
-  let a:int = 5 + 2*3 - 3*(4+5);
-  let b:int = -3*+4+a;
-
- 
-  {
-    let f:bool = "ererere";
-    {
-    }
-    {
-    	{
-	  let dasds:int = 234;
-          let f:int = 3;
-    	}
-    }	
-  }	
+fn invalid_dec(b:int, ) {
+ let a:= 5; 
 }
 
+fn (a:int) { 
+
+}
 

@@ -237,7 +237,12 @@ impl Tokens {
       },
       _ => format!("{}", token.t_subtype)
     };
-    format!("{} ({})", subtype_string, token.t_type )
+
+    if subtype_string.is_empty() {
+      format!("{}", token.t_type)
+    } else {
+      format!("{} ({})", token.t_type, subtype_string)
+    }
   }
 }
 

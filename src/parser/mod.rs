@@ -87,13 +87,23 @@ impl Parser {
           TokenType::RParen => {
             self.tokens.next();
           },
-          _ => {
+          TokenType::Identifier => {
             self.parse_function_argument_list();
             if !self.expect(TokenType::RParen) {
               self.skip_to_one_of(vec![TokenType::LBrace]);
             }
 
           },
+          _ => {
+            let token_str = self.tokens.to_string(&token);
+            self.register_error(
+              format!("Unexpected token {} when parsing argument list ",
+                token_str),
+              &token
+            );
+            self.skip_to_one_of(vec![TokenType::LBrace]);
+
+          }
         }
       },
       None => {
@@ -121,7 +131,7 @@ impl Parser {
   fn parse_function_parameter(&mut self) {
 
     if !self.expect(TokenType::Identifier) {
-      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen]);
+      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen, TokenType::LBrace]);
       return;
     }
 
@@ -152,8 +162,9 @@ impl Parser {
   fn parse_block(&mut self)  {
 
     if !self.expect(TokenType::LBrace) {
-      self.skip_to_one_of(vec![TokenType::LBrace]);
+      self.skip_to_one_of(vec![TokenType::RBrace]);
       self.tokens.next();
+      return;
     }
     self.parse_statements();
 
