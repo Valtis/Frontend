@@ -136,11 +136,13 @@ impl Parser {
     }
 
     if !self.expect(TokenType::Colon) {
-      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen]);
+      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen, TokenType::LBrace]);
       return;
     }
 
-    self.parse_value_type();
+    if !self.parse_value_type() {
+      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen, TokenType::LBrace]);
+    }
   }
 
 

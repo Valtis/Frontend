@@ -189,7 +189,7 @@ fn parser_errors_on_function_with_parameter_separator_but_no_parameters() {
 
 
 #[test]
-fn parser_errors_on_function_with_parameter_missing_type() {
+fn parser_errors_on_function_with_parameter_missing_type_and_colon() {
   let tokens = tokenize("fn func(a:int, b:double, c, d:bool) { }").unwrap();
 
   match parse(tokens) {
@@ -197,6 +197,19 @@ fn parser_errors_on_function_with_parameter_missing_type() {
     Err(errors) => {
       assert_eq!(1, errors.len());
       assert!(errors[0].contains("1:27"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_function_with_parameter_missing_type() {
+  let tokens = tokenize("fn func(a:int, b:double, c:, d:bool) { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(errors) => {
+      assert_eq!(1, errors.len());
+      assert!(errors[0].contains("1:28"));
     }
   }
 }
@@ -393,6 +406,7 @@ fn parser_gives_correct_error_message_on_invalid_function_definition_and_invalid
     }
   }
 }
+
 
 #[test]
 fn parser_accepts_arithmetic_expression() {

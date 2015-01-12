@@ -1,10 +1,16 @@
 // this is a test file for lexer and parser
 
-fn invalid_dec(b:int, ) {
- let a:= 5; 
+
+fn ad(a:int) 
+	let a = 5;	
+	
+	{
+		let a = 5;
+	}
 }
 
-fn (a:int) { 
 
+fn main(b:, b:int) {
+    let a = 5;
 }
 
