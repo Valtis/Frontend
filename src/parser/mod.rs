@@ -180,8 +180,9 @@ impl Parser {
         match (token.t_type) {
           TokenType::SemiColon => { self.tokens.next(); /* empty statement, skip */}
           TokenType::Let => { self.parse_variable_declaration(); },
-          TokenType::LBrace => { self.parse_block(); }
-          TokenType::RBrace => { return; /* end of block, return*/}
+          TokenType::LBrace => { self.parse_block(); },
+          TokenType::Identifier => { self.parse_variable_assignment(); }
+          TokenType::RBrace => { return; /* end of block, return*/},
           _ => {
               let token_str = self.tokens.to_string(&token);
               self.register_error_and_skip_to(
@@ -213,6 +214,25 @@ impl Parser {
     }
 
     if !self.parse_value_type() {
+      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      return;
+    }
+
+    if !self.expect(TokenType::Assign) {
+      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      return;
+    }
+
+    self.parse_expression();
+
+    if !self.expect(TokenType::SemiColon) {
+      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+    }
+
+  }
+
+  fn parse_variable_assignment(&mut self) {
+    if !self.expect(TokenType::Identifier) {
       self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
       return;
     }

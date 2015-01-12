@@ -1,16 +1,1 @@
 // this is a test file for lexer and parser
-
-
-fn ad(a:int) 
-	let a = 5;	
-	
-	{
-		let a = 5;
-	}
-}
-
-
-fn main(b:, b:int) {
-    let a = 5;
-}
-

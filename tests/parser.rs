@@ -348,7 +348,7 @@ fn parse_errors_on_variable_declaration_with_missing_let() {
     Ok(..) => assert!(false),
     Err(errors) => {
       assert_eq!(1, errors.len());
-      assert!(errors[0].contains("2:3"));
+      assert!(errors[0].contains("2:4"));
     }
   }
 }
@@ -459,8 +459,6 @@ fn parser_errors_on_arithmetic_expression_with_too_many_right_parenthesis() {
   }
 }
 
-
-
 #[test]
 fn parser_gives_correct_error_messages_on_two_different_arithmetic_expression_with_errors() {
   let tokens = tokenize("fn foo() { let a:int = 5 + 6*(7+1)) - b;\nlet b:int = 5 }").unwrap();
@@ -471,6 +469,31 @@ fn parser_gives_correct_error_messages_on_two_different_arithmetic_expression_wi
       assert_eq!(2, err.len());
       assert!(err[0].contains("1:35"));
       assert!(err[1].contains("2:15"));
+    }
+  }
+}
+
+#[test]
+fn parser_accepts_variable_assignments() {
+  let tokens = tokenize("fn foo() { \na = 5;\nb = 4*a-5*(3*(7-4)); }  ").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false),
+  }
+}
+
+#[test]
+fn parser_gives_correct_error_messages_on_invalid_assignments() {
+
+  let tokens = tokenize("fn foo() { \ninvalid = ;\ncorrect=23;\ninvalid 4*a-5*(3*(7-4));\ncorrect=321;\ninvalid=23 }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(3, err.len());
+      assert!(err[0].contains("2:11"));
+      assert!(err[1].contains("4:9"));
+      assert!(err[2].contains("6:12"));
     }
   }
 }
