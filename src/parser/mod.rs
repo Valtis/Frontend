@@ -181,7 +181,7 @@ impl Parser {
           TokenType::SemiColon => { self.tokens.next(); /* empty statement, skip */}
           TokenType::Let => { self.parse_variable_declaration(); },
           TokenType::LBrace => { self.parse_block(); },
-          TokenType::Identifier => { self.parse_variable_assignment(); }
+          TokenType::Identifier => self.parse_variable_assignment_or_function_call(),
           TokenType::RBrace => { return; /* end of block, return*/},
           _ => {
               let token_str = self.tokens.to_string(&token);
@@ -231,14 +231,72 @@ impl Parser {
 
   }
 
-  fn parse_variable_assignment(&mut self) {
-    if !self.expect(TokenType::Identifier) {
-      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+  fn parse_variable_assignment_or_function_call(&mut self) {
+    self.tokens.next();
+
+    match self.tokens.peek() {
+      Some(token) => match token.t_type {
+        TokenType::LParen => self.parse_function_call(),
+        TokenType::Assign => self.parse_variable_assignment(),
+        _ => {
+          let token_str = self.tokens.to_string(&token);
+
+          self.register_error_and_skip_to(
+            format!("Unexpected token {}. Expected {} for variable assignment or {} for function call",
+              token_str, TokenType::Assign, TokenType::LParen),
+            &token,
+            vec![TokenType::RBrace, TokenType::SemiColon]);
+        }
+      },
+      _ => self.errors.push("Unexpected end-of-line".to_string()),
+    }
+
+  }
+
+  fn parse_function_call(&mut self) {
+    if !self.expect(TokenType::LParen) {
+      self.skip_to_one_of(vec![TokenType::SemiColon]);
       return;
     }
 
+    self.parse_optional_function_call_argument_list();
+
+    if !self.expect(TokenType::RParen) {
+      self.skip_to_one_of(vec![TokenType::SemiColon]);
+      return;
+    }
+  }
+
+  fn parse_optional_function_call_argument_list(&mut self) {
+    match self.tokens.peek() {
+      Some(token) => {
+        if token.t_type != TokenType::RParen {
+          self.parse_function_call_argument_list();
+        }
+      }
+      None => { }
+    }
+  }
+
+  fn parse_function_call_argument_list(&mut self) {
+    self.parse_expression();
+
+    match self.tokens.peek() {
+      Some(token) => {
+        if token.t_type == TokenType::Comma {
+          self.tokens.next();
+          self.parse_function_call_argument_list();
+        }
+      }
+      None => { }
+    }
+
+  }
+
+  fn parse_variable_assignment(&mut self) {
+
     if !self.expect(TokenType::Assign) {
-      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      self.skip_to_one_of(vec![TokenType::SemiColon]);
       return;
     }
 

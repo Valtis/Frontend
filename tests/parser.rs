@@ -497,3 +497,72 @@ fn parser_gives_correct_error_messages_on_invalid_assignments() {
     }
   }
 }
+
+#[test]
+fn parser_accepts_function_call_syntax() {
+  let tokens = tokenize("fn foo() { bar(); bar(1); bar(5, 6, 7, 8); bar(5*5+a-b/C, 2); }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false),
+  }
+}
+
+#[test]
+fn parser_errors_on_missing_left_parenthesis_with_function_call() {
+  let tokens = tokenize("fn foo() { \nbar5); }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:5"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_missing_right_parenthesis_with_function_call() {
+  let tokens = tokenize("fn foo() { \nbar(5; }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:6"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_missing_identifier_with_function_call() {
+  let tokens = tokenize("fn foo() { \n(5); }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:5"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_missing_parameter_with_function_call() {
+  let tokens = tokenize("fn foo() { \nbar(5,); }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:7"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_when_only_comma_pesent_with_function_call() {
+  let tokens = tokenize("fn foo() { \nbar(,); }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:5"));
+    }
+  }
+}

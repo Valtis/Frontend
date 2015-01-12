@@ -1,1 +1,17 @@
 // this is a test file for lexer and parser
+
+fn main(a:int, b:int) : int {
+  let a:int = 5;
+  let b:int = 6;
+  
+  let c:int = 5*6;
+  c = c + a + b;
+  
+  printer(c);
+  printer(c * 12 + 4);
+  printer(1,);
+}
+
+fn printer(print_value:int) {
+  println(print_value);
+}
