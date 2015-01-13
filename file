@@ -10,6 +10,7 @@ fn main(a:int, b:int) : int {
   printer(c);
   printer(c * 12 + 4);
   printer(1,);
+  (5);
 }
 
 fn printer(print_value:int) {

@@ -538,7 +538,7 @@ fn parser_errors_on_missing_identifier_with_function_call() {
     Ok(..) => assert!(false),
     Err(err) => {
       assert_eq!(1, err.len());
-      assert!(err[0].contains("2:5"));
+      assert!(err[0].contains("2:1"));
     }
   }
 }

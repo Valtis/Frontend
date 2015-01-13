@@ -259,7 +259,9 @@ impl Parser {
       return;
     }
 
-    self.parse_optional_function_call_argument_list();
+    if !self.parse_optional_function_call_argument_list() {
+      return;
+    }
 
     if !self.expect(TokenType::RParen) {
       self.skip_to_one_of(vec![TokenType::SemiColon]);
@@ -267,28 +269,34 @@ impl Parser {
     }
   }
 
-  fn parse_optional_function_call_argument_list(&mut self) {
+  fn parse_optional_function_call_argument_list(&mut self) -> bool {
     match self.tokens.peek() {
       Some(token) => {
         if token.t_type != TokenType::RParen {
-          self.parse_function_call_argument_list();
+          self.parse_function_call_argument_list()
+        } else {
+          true
         }
       }
-      None => { }
+      None => { true }
     }
   }
 
-  fn parse_function_call_argument_list(&mut self) {
-    self.parse_expression();
+  fn parse_function_call_argument_list(&mut self) -> bool {
+    if !self.parse_expression() {
+      return false;
+    }
 
     match self.tokens.peek() {
       Some(token) => {
         if token.t_type == TokenType::Comma {
           self.tokens.next();
-          self.parse_function_call_argument_list();
+          self.parse_function_call_argument_list()
+        } else {
+          true
         }
       }
-      None => { }
+      None => { true }
     }
 
   }
@@ -308,47 +316,43 @@ impl Parser {
 
   }
 
-  fn parse_expression(&mut self) {
-    self.parse_term();
-    self.parse_plus_minus_expression();
+  fn parse_expression(&mut self) -> bool {
+    self.parse_term() && self.parse_plus_minus_expression()
   }
 
-  fn parse_plus_minus_expression(&mut self) {
+  fn parse_plus_minus_expression(&mut self) -> bool {
     match self.tokens.peek() {
       Some(token) => match token.t_subtype {
         TokenSubType::Plus | TokenSubType::Minus => {
           self.tokens.next();
-          self.parse_term();
-          self.parse_plus_minus_expression();
+          self.parse_term() && self.parse_plus_minus_expression()
         },
-        _ => { /* epsilon */ }
+        _ => { true }
       },
-      None => { },
+      None => { true },
     }
   }
 
-  fn parse_term(&mut self) {
-    self.parse_factor();
-    self.parse_mult_div_term();
+  fn parse_term(&mut self) -> bool {
+    self.parse_factor() && self.parse_mult_div_term()
   }
 
-  fn parse_mult_div_term(&mut self) {
+  fn parse_mult_div_term(&mut self) -> bool {
     match self.tokens.peek() {
       Some(token) => match token.t_subtype {
         TokenSubType::Multiply | TokenSubType::Divide => {
           self.tokens.next();
-          self.parse_factor();
-          self.parse_mult_div_term();
+          self.parse_factor() && self.parse_mult_div_term()
           },
-        _ => { /* epsilon */ }
+        _ => { true }
         },
-        None => { },
+        None => { true },
       }
   }
 
-  fn parse_factor(&mut self) {
+  fn parse_factor(&mut self) -> bool {
     // helper function
-    let factor_err =  |&: parser:&mut Parser, token:&SyntaxToken| {
+    let factor_err =  |&: parser:&mut Parser, token:&SyntaxToken| -> bool {
 
       let token_str = parser.tokens.to_string(token);
 
@@ -357,43 +361,49 @@ impl Parser {
       token);
 
       parser.skip_to_one_of(vec![TokenType::SemiColon, TokenType::LBrace]);
+      false
     };
 
     match self.tokens.next() {
       Some(token) => match token.t_type {
-        TokenType::ArithOp => {
-          // check if op is + or -, and if it is followed by a number. If so, accept.
-          match token.t_subtype {
-            TokenSubType::Plus | TokenSubType::Minus => {
-              match self.tokens.peek() {
-                Some(peek_token) => match peek_token.t_type {
-                  TokenType::Number => { self.tokens.next(); },
-                  _ => { factor_err(self, &token); },
-                },
-                None => factor_err(self, &token),
-              }
-            }
-            _ => factor_err(self, &token),
-          }
-
-        },
-        TokenType::Identifier => { /* accept */},
-        TokenType::Number | TokenType::Text | TokenType::Boolean => { /* accept*/},
+        // check if op is + or -, and if it is followed by a number. If so, accept.
+        TokenType::ArithOp => self.parse_plus_minus_number(&token, factor_err),
+        TokenType::Identifier => { true },
+        TokenType::Number | TokenType::Text | TokenType::Boolean => { true },
         TokenType::LParen => {
           self.parse_expression();
           if !self.expect(TokenType::RParen) {
             self.skip_to_one_of(vec![TokenType::SemiColon, TokenType::LBrace]);
+            false
+          } else {
+            true
           }
         }
-        _ => {
-            factor_err(self, &token);
-          }
+        _ => factor_err(self, &token),
       },
-      None => self.errors.push(
-        "Unexpected end of file when parsing expression".to_string()),
+      None => {
+        self.errors.push(
+          "Unexpected end of file when parsing expression".to_string());
+          false
+        },
     }
   }
 
+  fn parse_plus_minus_number<F: Fn(&mut Parser, &SyntaxToken) -> bool>
+  (&mut self, token:&SyntaxToken, factor_err: F) -> bool {
+    match token.t_subtype {
+      TokenSubType::Plus | TokenSubType::Minus => {
+        match self.tokens.peek() {
+          Some(peek_token) => match peek_token.t_type {
+            TokenType::Number => { self.tokens.next(); true },
+            _ => factor_err(self, token),
+            },
+            None => factor_err(self, token),
+          }
+        }
+        _ => factor_err(self, token),
+      }
+  }
 
   fn expect(&mut self, expected_type: TokenType) -> bool {
     match self.tokens.peek() {
