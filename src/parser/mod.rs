@@ -66,111 +66,178 @@ impl Parser {
   }
 
 
-  fn parse_function(&mut self) {
-    self.expect(TokenType::Identifier);
+  fn parse_function(&mut self) -> bool {
+    let mut success = true;
+    if !self.parse_function_declaration() {
+      self.skip_to_one_of(vec![TokenType::LBrace,
+        TokenType::Fn]);
+      success = false;
+      // if next token is lbrace, we can check the block for syntax issues
+      // otherwise code is sufficiently broken that we should just bail out here
 
-    self.parse_optional_function_arguments();
-    self.parse_optional_return_type();
-    self.parse_block();
-  }
-
-  fn parse_optional_function_arguments(&mut self) {
-
-    if !self.expect(TokenType::LParen) {
-      self.skip_to_one_of(vec![TokenType::LBrace]);
-      return;
-    }
-
-    match self.tokens.peek() {
-      Some(token) => {
-        match token.t_type {
-          TokenType::RParen => {
-            self.tokens.next();
-          },
-          TokenType::Identifier => {
-            self.parse_function_argument_list();
-            if !self.expect(TokenType::RParen) {
-              self.skip_to_one_of(vec![TokenType::LBrace]);
-            }
-
-          },
-          _ => {
-            let token_str = self.tokens.to_string(&token);
-            self.register_error(
-              format!("Unexpected token {} when parsing argument list ",
-                token_str),
-              &token
-            );
-            self.skip_to_one_of(vec![TokenType::LBrace]);
-
-          }
-        }
-      },
-      None => {
-        self.errors.push(format!("Unexpected end of file: Expected token {}",
-          TokenType::RParen));
-        self.skip_to_one_of(vec![TokenType::LBrace]);
+      if !self.next_token_is(TokenType::LBrace) {
+        return false;
       }
     }
+
+    self.parse_block() && success
   }
 
-  fn parse_function_argument_list(&mut self) {
-    self.parse_function_parameter();
+  fn parse_function_declaration(&mut self) -> bool {
+    let mut success = true;
 
-    match self.tokens.peek() {
-      Some(token) => {
-        if token.t_type == TokenType::Comma {
-          self.tokens.next();
-          self.parse_function_argument_list()
-        }
-      },
-      None => { },
+    if !self.expect(TokenType::Identifier) {
+      // skip to start of block or start of parameter list
+      self.skip_to_one_of(vec![TokenType::Fn, TokenType::LBrace,
+        TokenType::LParen]);
+      success = false;
+      // if next token is not start of parameter list, bail out.
+      // Otherwise, continue parsing in order to see if there are any
+      // additional syntax issues
+      if !self.next_token_is(TokenType::LParen) {
+        return false;
+      }
+    }
+
+    if !self.expect(TokenType::LParen) {
+      self.skip_to_one_of(vec![TokenType::Fn, TokenType::LBrace,
+        TokenType::RParen, TokenType::Identifier]);
+      success = false;
+      // same logic as above
+      // empty if block for clarity, as I felt the alternative was a bit confusing
+      if self.next_token_is(TokenType::RParen) ||
+         self.next_token_is(TokenType::Identifier) {
+          /* continue */
+      } else {
+        return false;
+      }
+    }
+
+    if !self.parse_function_parameters() {
+      self.skip_to_one_of(vec![TokenType::Fn, TokenType::LBrace,
+        TokenType::RParen]);
+      success = false;
+      // same logic as above
+      if !self.next_token_is(TokenType::RParen) {
+        return false;
+      }
+    }
+
+    if !self.expect(TokenType::RParen) {
+      self.skip_to_one_of(vec![TokenType::Fn, TokenType::LBrace,
+        TokenType::Colon]);
+      success = false;
+      // same logic as above
+      if !self.next_token_is(TokenType::Colon) {
+        return false;
+      }
+    }
+
+    self.parse_optional_return_type() && success
+  }
+
+  fn parse_function_parameters(&mut self) -> bool {
+    if self.next_token_is(TokenType::RParen) {
+      true
+    } else {
+      self.parse_function_parameter_list()
     }
   }
 
-  fn parse_function_parameter(&mut self) {
+  fn parse_function_parameter_list(&mut self) -> bool {
+
+    let mut success = true;
+
+    if !self.parse_function_parameter() {
+      success = false;
+      self.skip_to_one_of(vec![TokenType::Fn, TokenType::Comma,
+        TokenType::RParen, TokenType::LBrace]);
+
+      // skipped whole list and either reached start of next block
+      // or start of function -> bail out
+      if self.next_token_is(TokenType::LBrace) ||
+         self.next_token_is(TokenType::Fn) {
+        return false;
+      }
+    }
+
+    self.parse_additional_parameters() && success
+  }
+
+  fn parse_additional_parameters(&mut self) -> bool {
+    if self.next_token_is(TokenType::RParen) {
+      return true;
+    }
+
+    let mut success = true;
+
+    if !self.expect(TokenType::Comma) {
+      success = false;
+      self.skip_to_one_of(vec![TokenType::Fn, TokenType::Comma,
+        TokenType::RParen, TokenType::LBrace]);
+
+      if self.next_token_is(TokenType::Comma) {
+        self.parse_additional_parameters();
+        return false;
+      } else {
+        return false;
+      }
+    }
+
+    if !self.parse_function_parameter() {
+      success = false;
+      self.skip_to_one_of(vec![TokenType::Fn, TokenType::Comma,
+        TokenType::RParen, TokenType::LBrace]);
+      if !self.next_token_is(TokenType::Comma) {
+          return false;
+      }
+    }
+
+    self.parse_additional_parameters() && success
+  }
+
+
+  fn parse_function_parameter(&mut self) -> bool {
 
     if !self.expect(TokenType::Identifier) {
-      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen, TokenType::LBrace]);
-      return;
+      return false;
     }
 
     if !self.expect(TokenType::Colon) {
-      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen, TokenType::LBrace]);
-      return;
+      return false;
     }
 
     if !self.parse_value_type() {
-      self.skip_to_one_of(vec![TokenType::Comma, TokenType::RParen, TokenType::LBrace]);
+      return false;
     }
+
+    true
   }
 
 
-  fn parse_optional_return_type(&mut self) {
-    match self.tokens.peek() {
-      Some(token) => {
-        if token.t_type == TokenType::Colon {
-          self.tokens.next();
+  fn parse_optional_return_type(&mut self) -> bool {
 
-          if !self.parse_any_type() {
-            self.skip_to_one_of(vec![TokenType::LBrace]);
-          }
-        }
-      },
-      None => { }
+    if self.next_token_is(TokenType::Colon) {
+      self.tokens.next();
+
+      if !self.parse_any_type() {
+        return false;
+      }
     }
+
+    true
   }
 
-  fn parse_block(&mut self)  {
+  fn parse_block(&mut self) -> bool {
 
     if !self.expect(TokenType::LBrace) {
       self.skip_to_one_of(vec![TokenType::RBrace]);
       self.tokens.next();
-      return;
+      return false;
     }
     self.parse_statements();
 
-    self.expect(TokenType::RBrace);
+    self.expect(TokenType::RBrace)
   }
 
   fn parse_statements(&mut self)  {
@@ -428,6 +495,15 @@ impl Parser {
 
         false
       },
+    }
+  }
+
+  fn next_token_is(&mut self, token_type: TokenType) -> bool {
+    match self.tokens.peek() {
+      Some(token) => {
+        token.t_type == token_type
+      }
+      None => false,
     }
   }
 

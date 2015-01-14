@@ -181,8 +181,9 @@ fn parser_errors_on_function_with_parameter_separator_but_no_parameters() {
   match parse(tokens) {
     Ok(..) => assert!(false),
     Err(errors) => {
-      assert_eq!(1, errors.len());
+      assert_eq!(2, errors.len());
       assert!(errors[0].contains("1:9"));
+      assert!(errors[1].contains("1:10"));
     }
   }
 }
