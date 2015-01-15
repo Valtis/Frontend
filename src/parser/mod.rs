@@ -169,8 +169,6 @@ impl Parser {
       return true;
     }
 
-
-
     if !self.expect(TokenType::Comma) {
       self.skip_to_one_of(vec![TokenType::Fn, TokenType::Comma,
         TokenType::RParen, TokenType::LBrace]);
@@ -206,11 +204,7 @@ impl Parser {
       return false;
     }
 
-    if !self.parse_value_type() {
-      return false;
-    }
-
-    true
+    self.expect(TokenType::VarType)
   }
 
 
@@ -219,7 +213,7 @@ impl Parser {
     if self.next_token_is(TokenType::Colon) {
       self.tokens.next();
 
-      if !self.parse_any_type() {
+      if !self.expect(TokenType::VarType) {
         return false;
       }
     }
@@ -279,7 +273,7 @@ impl Parser {
       return;
     }
 
-    if !self.parse_value_type() {
+    if !self.expect(TokenType::VarType) {
       self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
       return;
     }
@@ -355,7 +349,6 @@ impl Parser {
 
     if !self.parse_expression() {
       success = false;
-
       self.skip_to_one_of(vec![TokenType::SemiColon, TokenType::Comma,
          TokenType::RBrace, TokenType::LBrace, TokenType::Fn]);
 
@@ -461,13 +454,17 @@ impl Parser {
       false
     };
 
-    match self.tokens.next() {
+    match self.tokens.peek() {
       Some(token) => match token.t_type {
         // check if op is + or -, and if it is followed by a number. If so, accept.
-        TokenType::ArithOp => self.parse_plus_minus_number(&token, factor_err),
-        TokenType::Identifier => { true },
-        TokenType::Number | TokenType::Text | TokenType::Boolean => { true },
+        TokenType::ArithOp => {
+          self.tokens.next();
+          self.parse_plus_minus_number(&token, factor_err)
+        },
+        TokenType::Identifier => { self.tokens.next(); true },
+        TokenType::Number | TokenType::Text | TokenType::Boolean => { self.tokens.next(); true },
         TokenType::LParen => {
+          self.tokens.next();
           self.parse_expression();
           self.expect(TokenType::RParen)
         }
@@ -482,7 +479,8 @@ impl Parser {
   }
 
   fn parse_plus_minus_number<F: Fn(&mut Parser, &SyntaxToken) -> bool>
-  (&mut self, token:&SyntaxToken, factor_err: F) -> bool {
+        (&mut self, token:&SyntaxToken, factor_err: F) -> bool {
+
     match token.t_subtype {
       TokenSubType::Plus | TokenSubType::Minus => {
         match self.tokens.peek() {
@@ -529,41 +527,6 @@ impl Parser {
         token.t_type == token_type
       }
       None => false,
-    }
-  }
-
-  fn parse_any_type(&mut self) -> bool {
-    self.expect(TokenType::VarType)
-  }
-
-  fn parse_value_type(&mut self) -> bool {
-    match self.tokens.next() {
-      Some(token) => {
-        if token.t_type == TokenType::VarType {
-          if token.t_subtype == TokenSubType::VoidType {
-            let token_str = self.tokens.to_string(&token);
-            self.register_error(
-              format!("Expected a value type parameter, instead found {}",
-              token_str),
-              &token);
-              false
-          } else {
-            true
-          }
-        } else {
-          let token_str = self.tokens.to_string(&token);
-          self.register_error(
-            format!("Expected a type parameter, instead found {}",
-              token_str),
-            &token);
-            false
-        }
-      },
-      None => {
-        self.errors
-            .push("Expected a type parameter, instead found end-of-file".to_string());
-        false
-      }
     }
   }
 

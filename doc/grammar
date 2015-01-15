@@ -18,9 +18,9 @@ FUNCTION_PARAMETER_LIST -> FUNCTION_PARAMETER ADDITIONAL_PARAMETERS
 
 ADDITIONAL_PARAMETERS -> , FUNCTION_PARAMETER ADDITIONAL_PARAMETERS | e
 
-FUNCTION_PARAMETER -> identifier : VALUE_TYPE
+FUNCTION_PARAMETER -> identifier : TYPE
 
-OPTIONAL_RETURN_TYPE : ANY_TYPE | e
+OPTIONAL_RETURN_TYPE : TYPE | e
 
 BLOCK -> { STATEMENTS }
 
@@ -31,7 +31,7 @@ STATEMENT -> VARIABLE_DECLARATION
 		 | VARIABLE_ASSIGNMENT
 		 | FUNCTION_CALL
 
-VARIABLE_DECLARATION -> let identifier : VALUE_TYPE = EXPRESSION;
+VARIABLE_DECLARATION -> let identifier : TYPE = EXPRESSION;
 
 VARIABLE_ASSIGNMENT -> identifier = EXPRESSION;
 
@@ -60,19 +60,19 @@ FACTOR -> ( EXPRESSION )
         | CONSTANT_VALUE
 
 
-VALUE_TYPE -> int_type
+TYPE -> int_type
       | float_type
       | double_type
       | boolean_type
       | string_type 
-
-ANY_TYPE -> VALUE_TYPE | void_type
+	  | void_type
 
 CONSTANT_VALUE -> integer_token
                 | float_token
                 | double_token
                 | boolean_token
                 | string_token  
+				
 
 	note on CONSTANT_VALUE: for numbers, +/- are valid start tokens (eg. "+" token followed by a int/float/double would be accepted)
 

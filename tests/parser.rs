@@ -148,19 +148,6 @@ fn parser_accepts_function_with_string_type() {
 }
 
 #[test]
-fn parser_errors_on_function_with_void_parameter() {
-  let tokens = tokenize("fn func(a:int, b:void) {}").unwrap();
-
-  match parse(tokens) {
-    Ok(..) => assert!(false),
-    Err(errors) => {
-      assert_eq!(1, errors.len());
-      assert!(errors[0].contains("1:18"));
-    }
-  }
-}
-
-#[test]
 fn parser_errors_on_function_with_missing_parameter() {
   let tokens = tokenize("fn func(a:int, ) {}").unwrap();
 
@@ -255,6 +242,24 @@ fn parser_errors_on_function_with_parameters_and_missing_right_parenthesis() {
 }
 
 #[test]
+#[test]
+fn parser_errors_with_correct_errors_with_multiple_errors_in_declaration() {
+  let tokens = tokenize("fn  (aint, b:, float, d:bool { }").unwrap();
+
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(errors) => {
+      assert_eq!(5, errors.len());
+      assert!(errors[0].contains("1:5"));
+      assert!(errors[1].contains("1:10"));
+      assert!(errors[2].contains("1:14"));
+      assert!(errors[3].contains("1:16"));
+      assert!(errors[4].contains("1:30"));
+    }
+  }
+}
+
+#[test]
 fn parse_parses_single_variable_declaration_with_constant_value_correctly() {
   let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) { let a:int = 5; }").unwrap();
 
@@ -324,19 +329,6 @@ fn parse_errors_on_variable_declaration_with_missing_colon() {
     Err(errors) => {
       assert_eq!(1, errors.len());
       assert!(errors[0].contains("2:12"));
-    }
-  }
-}
-
-#[test]
-fn parser_errors_on_variable_declaration_with_void_type() {
-  let tokens = tokenize("fn func (a:int, b:double, c:float, d:bool) {\n  let a:void = 5; }").unwrap();
-
-  match parse(tokens) {
-    Ok(..) => assert!(false),
-    Err(errors) => {
-      assert_eq!(1, errors.len());
-      assert!(errors[0].contains("2:9"));
     }
   }
 }
@@ -557,13 +549,29 @@ fn parser_errors_on_missing_parameter_with_function_call() {
 }
 
 #[test]
-fn parser_errors_when_only_comma_pesent_with_function_call() {
+fn parser_errors_when_only_comma_present_with_function_call() {
   let tokens = tokenize("fn foo() { \nbar(,); }").unwrap();
   match parse(tokens) {
     Ok(..) => assert!(false),
     Err(err) => {
-      assert_eq!(1, err.len());
+      assert_eq!(2, err.len());
       assert!(err[0].contains("2:5"));
+      assert!(err[1].contains("2:6"));
+    }
+  }
+}
+
+#[test]
+fn parser_gives_error_messages_for_multiple_issues_with_arguments() {
+  let tokens = tokenize("fn foo() { \nbar(a+*3, a-b+, vava+,); }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(4, err.len());
+      assert!(err[0].contains("2:7"));
+      assert!(err[1].contains("2:15"));
+      assert!(err[2].contains("2:22"));
+      assert!(err[3].contains("2:23"));
     }
   }
 }
