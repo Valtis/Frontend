@@ -491,6 +491,86 @@ fn parser_gives_correct_error_messages_on_invalid_assignments() {
 }
 
 #[test]
+fn parser_accepts_expression_with_equality_operator() {
+  let tokens = tokenize("fn foo() { b = a + 5*(2+3) == y - 3;}").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false),
+  }
+}
+
+#[test]
+fn parser_accepts_expression_with_greater_than_operator() {
+  let tokens = tokenize("fn foo() { b = a + 5*(2+3) > y - 3;}").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false),
+  }
+}
+
+#[test]
+fn parser_accepts_expression_with_lesser_than_operator() {
+  let tokens = tokenize("fn foo() { b = a + 5*(2+3) < y - 3;}").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false),
+  }
+}
+
+#[test]
+fn parser_accepts_expression_with_greater_or_equal_operator() {
+  let tokens = tokenize("fn foo() { b = a + 5*(2+3) >= y - 3;}").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false),
+  }
+}
+
+#[test]
+fn parser_accepts_expression_with_smaller_or_equal_operator() {
+  let tokens = tokenize("fn foo() { b = a + 5*(2+3) >= y - 3;}").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false),
+  }
+}
+
+
+#[test]
+fn parser_accepts_expression_with_order_comparison_and_equality_operator() {
+  let tokens = tokenize("fn foo() { b = (a + 5*(2+3) >= y - 3) == false;}").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false),
+  }
+}
+
+#[test]
+fn parser_errors_correctly_when_syntax_error_is_after_equality_operator() {
+  let tokens = tokenize("fn foo() {\na = 5 == 3*7+; }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:14"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_correctly_when_syntax_error_is_after_greater_than_operator() {
+  let tokens = tokenize("fn foo() {\na = 5 > 3*7+; }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:13"));
+    }
+  }
+}
+
+
+#[test]
 fn parser_accepts_function_call_syntax() {
   let tokens = tokenize("fn foo() { bar(); bar(1); bar(5, 6, 7, 8); bar(5*5+a-b/C, 2); }").unwrap();
   match parse(tokens) {

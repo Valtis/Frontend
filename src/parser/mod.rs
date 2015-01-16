@@ -409,6 +409,51 @@ impl Parser {
   }
 
   fn parse_expression(&mut self) -> bool {
+    self.parse_expression_2() && self.parse_equality_expression()
+  }
+
+  fn parse_equality_expression(&mut self) -> bool {
+    match self.tokens.peek() {
+      Some(token) => {
+        if token.t_type == TokenType::CompOp && token.t_subtype == TokenSubType::Equals {
+          self.tokens.next();
+          self.parse_expression_2() && self.parse_equality_expression()
+        } else {
+          true
+        }
+      },
+      None => { true },
+    }
+  }
+
+
+
+  fn parse_expression_2(&mut self) -> bool {
+    self.parse_expression_3() && self.parse_less_more_expression()
+  }
+
+  fn parse_less_more_expression(&mut self) -> bool {
+    match self.tokens.peek() {
+      Some(token) => {
+        if token.t_type == TokenType::CompOp {
+          match (token.t_subtype) {
+            TokenSubType::Lesser | TokenSubType::Greater | TokenSubType::GreaterOrEq |
+            TokenSubType::LesserOrEq => {
+              self.tokens.next();
+              self.parse_expression_3() && self.parse_less_more_expression()
+            },
+            _ => true
+          }
+        } else {
+          true
+        }
+      }
+      None => { true },
+    }
+  }
+
+  // see grammar for better description. I need to figure out better naming
+  fn parse_expression_3(&mut self) -> bool {
     self.parse_term() && self.parse_plus_minus_expression()
   }
 
