@@ -69,7 +69,7 @@ impl Parser {
   fn parse_function(&mut self) -> bool {
     let mut success = true;
     if !self.parse_function_declaration() {
-      self.skip_to_one_of(vec![TokenType::LBrace,
+      self.skip_to_first_of(vec![TokenType::LBrace,
         TokenType::Fn]);
       success = false;
       // if next token is lbrace, we can check the block for syntax issues
@@ -88,7 +88,7 @@ impl Parser {
 
     if !self.expect(TokenType::Identifier) {
       // skip to start of block or start of parameter list
-      self.skip_to_one_of(vec![TokenType::Fn, TokenType::LBrace,
+      self.skip_to_first_of(vec![TokenType::Fn, TokenType::LBrace,
         TokenType::LParen]);
       success = false;
       // if next token is not start of parameter list, bail out.
@@ -100,7 +100,7 @@ impl Parser {
     }
 
     if !self.expect(TokenType::LParen) {
-      self.skip_to_one_of(vec![TokenType::Fn, TokenType::LBrace,
+      self.skip_to_first_of(vec![TokenType::Fn, TokenType::LBrace,
         TokenType::RParen, TokenType::Identifier]);
       success = false;
       // same logic as above
@@ -114,7 +114,7 @@ impl Parser {
     }
 
     if !self.parse_function_parameters() {
-      self.skip_to_one_of(vec![TokenType::Fn, TokenType::LBrace,
+      self.skip_to_first_of(vec![TokenType::Fn, TokenType::LBrace,
         TokenType::RParen]);
       success = false;
       // same logic as above
@@ -124,7 +124,7 @@ impl Parser {
     }
 
     if !self.expect(TokenType::RParen) {
-      self.skip_to_one_of(vec![TokenType::Fn, TokenType::LBrace,
+      self.skip_to_first_of(vec![TokenType::Fn, TokenType::LBrace,
         TokenType::Colon]);
       success = false;
       // same logic as above
@@ -150,7 +150,7 @@ impl Parser {
 
     if !self.parse_function_parameter() {
       success = false;
-      self.skip_to_one_of(vec![TokenType::Fn, TokenType::Comma,
+      self.skip_to_first_of(vec![TokenType::Fn, TokenType::Comma,
         TokenType::RParen, TokenType::LBrace]);
 
       // skipped whole list and either reached start of next block
@@ -170,7 +170,7 @@ impl Parser {
     }
 
     if !self.expect(TokenType::Comma) {
-      self.skip_to_one_of(vec![TokenType::Fn, TokenType::Comma,
+      self.skip_to_first_of(vec![TokenType::Fn, TokenType::Comma,
         TokenType::RParen, TokenType::LBrace]);
 
       if self.next_token_is(TokenType::Comma) {
@@ -183,7 +183,7 @@ impl Parser {
     let mut success = true;
     if !self.parse_function_parameter() {
       success = false;
-      self.skip_to_one_of(vec![TokenType::Fn, TokenType::Comma,
+      self.skip_to_first_of(vec![TokenType::Fn, TokenType::Comma,
         TokenType::RParen, TokenType::LBrace]);
       if !self.next_token_is(TokenType::Comma) {
           return false;
@@ -224,7 +224,7 @@ impl Parser {
   fn parse_block(&mut self) -> bool {
 
     if !self.expect(TokenType::LBrace) {
-      self.skip_to_one_of(vec![TokenType::RBrace]);
+      self.skip_to_first_of(vec![TokenType::RBrace]);
       self.tokens.next();
       return false;
     }
@@ -261,32 +261,32 @@ impl Parser {
 
   fn parse_variable_declaration(&mut self) {
     if !self.expect(TokenType::Let) {
-      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
       return;
     }
     if !self.expect(TokenType::Identifier) {
-      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
       return;
     }
     if !self.expect(TokenType::Colon) {
-      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
       return;
     }
 
     if !self.expect(TokenType::VarType) {
-      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
       return;
     }
 
     if !self.expect(TokenType::Assign) {
-      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
       return;
     }
 
     self.parse_expression();
 
     if !self.expect(TokenType::SemiColon) {
-      self.skip_to_one_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
     }
 
   }
@@ -298,11 +298,11 @@ impl Parser {
       Some(token) => match token.t_type {
         TokenType::LParen => {
           if !self.parse_function_call() {
-            self.skip_to_one_of(vec![TokenType::SemiColon]);
+            self.skip_to_first_of(vec![TokenType::SemiColon]);
           }
         },
         TokenType::Assign => if !self.parse_variable_assignment() {
-          self.skip_to_one_of(vec![TokenType::SemiColon, TokenType::LBrace, TokenType::RBrace, TokenType::Fn]);
+          self.skip_to_first_of(vec![TokenType::SemiColon, TokenType::LBrace, TokenType::RBrace, TokenType::Fn]);
         },
         _ => {
           let token_str = self.tokens.to_string(&token);
@@ -329,7 +329,7 @@ impl Parser {
     }
 
     if !self.expect(TokenType::RParen) {
-      self.skip_to_one_of(vec![TokenType::SemiColon]);
+      self.skip_to_first_of(vec![TokenType::SemiColon]);
       return false;
     }
 
@@ -349,7 +349,7 @@ impl Parser {
 
     if !self.parse_expression() {
       success = false;
-      self.skip_to_one_of(vec![TokenType::SemiColon, TokenType::Comma,
+      self.skip_to_first_of(vec![TokenType::SemiColon, TokenType::Comma,
          TokenType::RBrace, TokenType::LBrace, TokenType::Fn]);
 
       // if we reached comma, continue parse, otherwise bail out
@@ -369,7 +369,7 @@ impl Parser {
     let mut success = true;
 
     if !self.expect(TokenType::Comma) {
-      self.skip_to_one_of(vec![TokenType::SemiColon, TokenType::Comma,
+      self.skip_to_first_of(vec![TokenType::SemiColon, TokenType::Comma,
         TokenType::RBrace, TokenType::LBrace, TokenType::Fn]);
 
       if self.next_token_is(TokenType::Comma) {
@@ -381,7 +381,7 @@ impl Parser {
 
     if !self.parse_expression() {
       success = false;
-      self.skip_to_one_of(vec![TokenType::SemiColon, TokenType::Comma,
+      self.skip_to_first_of(vec![TokenType::SemiColon, TokenType::Comma,
         TokenType::RBrace, TokenType::LBrace, TokenType::Fn]);
       if !self.next_token_is(TokenType::Comma) {
         return false;
@@ -579,7 +579,7 @@ impl Parser {
      skip_tokens: Vec<TokenType>) {
 
     self.register_error(msg, err_token);
-    self.skip_to_one_of(skip_tokens);
+    self.skip_to_first_of(skip_tokens);
   }
 
   fn register_error(&mut self, msg:String, err_token: &SyntaxToken) {
@@ -587,7 +587,7 @@ impl Parser {
       err_token.line, err_token.pos_at_line, msg));
   }
 
-  fn skip_to_one_of(&mut self, skip_tokens: Vec<TokenType>) {
+  fn skip_to_first_of(&mut self, skip_tokens: Vec<TokenType>) {
     loop {
       match self.tokens.peek() {
         Some(token) => {
