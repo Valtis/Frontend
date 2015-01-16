@@ -242,7 +242,6 @@ fn parser_errors_on_function_with_parameters_and_missing_right_parenthesis() {
 }
 
 #[test]
-#[test]
 fn parser_errors_with_correct_errors_with_multiple_errors_in_declaration() {
   let tokens = tokenize("fn  (aint, b:, float, d:bool { }").unwrap();
 
