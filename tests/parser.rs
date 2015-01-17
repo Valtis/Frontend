@@ -654,3 +654,56 @@ fn parser_gives_error_messages_for_multiple_issues_with_arguments() {
     }
   }
 }
+
+#[test]
+fn parser_accepts_for_loop() {
+  let tokens = tokenize("fn foo() { for (let a:int = 0; a < 10; a = a + 1) { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+
+#[test]
+fn parser_accepts_for_loop_without_initialization_or_expressions() {
+  let tokens = tokenize("fn foo() { for (;;) { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+
+#[test]
+fn parser_accepts_for_loop_with_variable_assignment() {
+  let tokens = tokenize("fn foo() { for (a=5;;) { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn parser_accepts_for_loop_with_blocks() {
+  let tokens = tokenize("fn foo() { for ({}; {}; {}) { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn for_loop_with_various_parse_errors_is_reported_correctly() {
+  let tokens = tokenize("fn foo() {\nfor (let a:int 5; a < 5+; a=a+) {\n let a = 5; } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(4, err.len());
+      assert!(err[0].contains("2:16"));
+      assert!(err[1].contains("2:25"));
+      assert!(err[2].contains("2:31"));
+      assert!(err[3].contains("3:8"));
+    }
+  }
+}

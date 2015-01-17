@@ -234,64 +234,73 @@ impl Parser {
   }
 
   fn parse_statements(&mut self)  {
-
-    match self.tokens.peek() {
-      Some(token) => {
-        match (token.t_type) {
-          TokenType::SemiColon => { self.tokens.next(); /* empty statement, skip */}
-          TokenType::Let => { self.parse_variable_declaration(); },
-          TokenType::LBrace => { self.parse_block(); },
-          TokenType::Identifier => self.parse_variable_assignment_or_function_call(),
-          TokenType::RBrace => { return; /* end of block, return*/},
-          _ => {
-              let token_str = self.tokens.to_string(&token);
-              self.register_error_and_skip_to(
-                format!("Unexpected token {} when expecting start of statement",
-                  token_str),
-                &token,
-                vec![TokenType::RBrace, TokenType::SemiColon]);
-            }
-          }
-      },
-      None => { return;/* empty statement list, end. Let the above level handle it*/ }
+    if self.next_token_is(TokenType::RBrace) || !self.parse_statement(){
+      return;
     }
 
     self.parse_statements();
   }
 
-  fn parse_variable_declaration(&mut self) {
+  fn parse_statement(&mut self) -> bool {
+    match self.tokens.peek() {
+      Some(token) => {
+        match (token.t_type) {
+        TokenType::SemiColon => { self.tokens.next(); true /* empty statement, skip */}
+        TokenType::Let => self.parse_variable_declaration(),
+        TokenType::LBrace => self.parse_block(),
+        TokenType::Identifier => self.parse_variable_assignment_or_function_call(),
+        TokenType::For => self.parse_for_loop(),
+        _ => {
+          let token_str = self.tokens.to_string(&token);
+          self.register_error_and_skip_to(
+            format!("Unexpected token {} when expecting start of statement",
+            token_str),
+            &token,
+            vec![TokenType::RBrace, TokenType::SemiColon]);
+            false
+          }
+        }
+        },
+      None => { false /* empty statement list, end. Let the above level handle it*/ }
+    }
+  }
+
+
+  fn parse_variable_declaration(&mut self) -> bool {
     if !self.expect(TokenType::Let) {
       self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
-      return;
+      return false;
     }
     if !self.expect(TokenType::Identifier) {
       self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
-      return;
+      return false;
     }
     if !self.expect(TokenType::Colon) {
       self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
-      return;
+      return false;
     }
 
     if !self.expect(TokenType::VarType) {
       self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
-      return;
+      return false;
     }
 
     if !self.expect(TokenType::Assign) {
       self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
-      return;
+      return false;
     }
 
     self.parse_expression();
 
     if !self.expect(TokenType::SemiColon) {
       self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
+      return false;
     }
 
+    true
   }
 
-  fn parse_variable_assignment_or_function_call(&mut self) {
+  fn parse_variable_assignment_or_function_call(&mut self) -> bool {
     self.tokens.next();
 
     match self.tokens.peek() {
@@ -299,11 +308,17 @@ impl Parser {
         TokenType::LParen => {
           if !self.parse_function_call() {
             self.skip_to_first_of(vec![TokenType::SemiColon]);
+            false
+          } else {
+            true
           }
         },
         TokenType::Assign => if !self.parse_variable_assignment() {
           self.skip_to_first_of(vec![TokenType::SemiColon, TokenType::LBrace, TokenType::RBrace, TokenType::Fn]);
-        },
+          false
+          } else {
+            true
+          },
         _ => {
           let token_str = self.tokens.to_string(&token);
 
@@ -312,11 +327,11 @@ impl Parser {
               token_str, TokenType::Assign, TokenType::LParen),
             &token,
             vec![TokenType::RBrace, TokenType::SemiColon]);
+            false
         }
       },
-      _ => self.errors.push("Unexpected end-of-line".to_string()),
+      _ => { self.errors.push("Unexpected end-of-line".to_string()); false },
     }
-
   }
 
   fn parse_function_call(&mut self) -> bool {
@@ -406,6 +421,29 @@ impl Parser {
     }
 
     true
+  }
+
+  fn parse_for_loop(&mut self) -> bool {
+    if !self.expect(TokenType::For) {
+      return false;
+    }
+
+    if !self.expect(TokenType::LParen) {
+
+      self.skip_to_first_of(vec![TokenType::LBrace, TokenType::SemiColon, TokenType::Fn]);
+      return false;
+    }
+
+
+    self.parse_statement();
+    self.parse_statement();
+
+    if !self.expect(TokenType::RParen) {
+      self.skip_to_first_of(vec![TokenType::LBrace, TokenType::SemiColon, TokenType::Fn]);
+      return false;
+    }
+
+    self.parse_block()
   }
 
   fn parse_expression(&mut self) -> bool {
