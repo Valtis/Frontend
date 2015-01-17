@@ -576,7 +576,7 @@ impl Parser {
       let token_str = parser.tokens.to_string(token);
 
       parser.register_error(
-        format!("Invalid token {}. Expected one of identifier, constant or left parenthesis.",
+        format!("Invalid token {}. Expected an expression",
                  token_str),
       token);
       false
