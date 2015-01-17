@@ -234,21 +234,32 @@ impl Parser {
   }
 
   fn parse_statements(&mut self)  {
-    if self.next_token_is(TokenType::RBrace) || !self.parse_statement(){
+    if self.next_token_is(TokenType::RBrace) {
       return;
+    }
+
+    if !self.parse_statement() {
+      self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon, TokenType::Fn]);
+
+      // next token is not rbrace or semicolon (so either fn or end-of-file -> bail out)
+      if !self.next_token_is(TokenType::RBrace) && !self.next_token_is(TokenType::SemiColon) {
+        return;
+      }
     }
 
     self.parse_statements();
   }
 
+
   fn parse_statement(&mut self) -> bool {
     match self.tokens.peek() {
       Some(token) => {
         match (token.t_type) {
-        TokenType::SemiColon => { self.tokens.next(); true /* empty statement, skip */}
-        TokenType::Let => self.parse_variable_declaration(),
+        TokenType::SemiColon => { self.tokens.next(); true } // empty statement
+        TokenType::Let => self.parse_variable_declaration() && self.expect(TokenType::SemiColon),
         TokenType::LBrace => self.parse_block(),
-        TokenType::Identifier => self.parse_variable_assignment_or_function_call(),
+        TokenType::Identifier =>
+            self.parse_variable_assignment_or_function_call() && self.expect(TokenType::SemiColon),
         TokenType::For => self.parse_for_loop(),
         _ => {
           let token_str = self.tokens.to_string(&token);
@@ -292,18 +303,11 @@ impl Parser {
 
     self.parse_expression();
 
-    if !self.expect(TokenType::SemiColon) {
-      self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon]);
-      return false;
-    }
-
     true
   }
 
   fn parse_variable_assignment_or_function_call(&mut self) -> bool {
-    self.tokens.next();
-
-    match self.tokens.peek() {
+    match self.tokens.peek_2() {
       Some(token) => match token.t_type {
         TokenType::LParen => {
           if !self.parse_function_call() {
@@ -314,7 +318,8 @@ impl Parser {
           }
         },
         TokenType::Assign => if !self.parse_variable_assignment() {
-          self.skip_to_first_of(vec![TokenType::SemiColon, TokenType::LBrace, TokenType::RBrace, TokenType::Fn]);
+          self.skip_to_first_of(vec![TokenType::SemiColon, TokenType::LBrace, TokenType::RBrace,
+            TokenType::Fn]);
           false
           } else {
             true
@@ -323,7 +328,8 @@ impl Parser {
           let token_str = self.tokens.to_string(&token);
 
           self.register_error_and_skip_to(
-            format!("Unexpected token {}. Expected {} for variable assignment or {} for function call",
+            format!("Unexpected token {}. Expected {} for variable assignment or {}
+                     for function call",
               token_str, TokenType::Assign, TokenType::LParen),
             &token,
             vec![TokenType::RBrace, TokenType::SemiColon]);
@@ -335,6 +341,11 @@ impl Parser {
   }
 
   fn parse_function_call(&mut self) -> bool {
+
+    if !self.expect(TokenType::Identifier) {
+      return false;
+    }
+
     if !self.expect(TokenType::LParen) {
       return false;
     }
@@ -408,15 +419,16 @@ impl Parser {
 
   fn parse_variable_assignment(&mut self) -> bool {
 
+
+    if !self.expect(TokenType::Identifier) {
+      return false;
+    }
+
     if !self.expect(TokenType::Assign) {
       return false;
     }
 
     if !self.parse_expression() {
-      return false;
-    }
-
-    if !self.expect(TokenType::SemiColon) {
       return false;
     }
 
@@ -435,8 +447,21 @@ impl Parser {
     }
 
 
-    self.parse_statement();
-    self.parse_statement();
+    if !self.next_token_is(TokenType::SemiColon) {
+      self.parse_optional_variable_declaration_or_assignment();
+    }
+
+    self.expect(TokenType::SemiColon);
+
+    if !self.next_token_is(TokenType::SemiColon) {
+      self.parse_expression();
+    }
+
+    self.expect(TokenType::SemiColon);
+
+    if !self.next_token_is(TokenType::RParen) {
+      self.parse_optional_variable_assignment();
+    }
 
     if !self.expect(TokenType::RParen) {
       self.skip_to_first_of(vec![TokenType::LBrace, TokenType::SemiColon, TokenType::Fn]);
@@ -445,6 +470,25 @@ impl Parser {
 
     self.parse_block()
   }
+
+  fn parse_optional_variable_declaration_or_assignment(&mut self) -> bool {
+    if self.next_token_is(TokenType::Let) {
+      self.parse_variable_declaration()
+      } else {
+        self.parse_optional_variable_assignment()
+      }
+    }
+
+  fn parse_optional_variable_assignment(&mut self) -> bool {
+    if self.next_token_is(TokenType::Identifier) {
+      self.parse_variable_assignment()
+    } else {
+      true
+    }
+  }
+
+
+
 
   fn parse_expression(&mut self) -> bool {
     self.parse_expression_2() && self.parse_equality_expression()
@@ -532,7 +576,8 @@ impl Parser {
       let token_str = parser.tokens.to_string(token);
 
       parser.register_error(
-        format!("Invalid token {}. Expected one of identifier, constant or left parenthesis.", token_str),
+        format!("Invalid token {}. Expected one of identifier, constant or left parenthesis.",
+                 token_str),
       token);
       false
     };

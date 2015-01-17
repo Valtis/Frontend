@@ -97,7 +97,7 @@ fn next_advances_queue() {
 }
 
 #[test]
-fn peek_returns_correct_value_after_pops() {
+fn peek_returns_correct_value_after_nexts() {
   let mut tokens = create_queue();
 
   let first_expected = SyntaxToken::new(TokenType::If, TokenSubType::NoSubType, 0, 0);
@@ -117,6 +117,105 @@ fn peek_returns_correct_value_after_pops() {
   match tokens.peek() {
     Some(actual) => assert_eq!(third_expected, actual),
     None => assert!(false),
+  }
+}
+
+fn peek_2_returns_correct_value() {
+  let mut tokens = create_queue();
+
+  let expected = SyntaxToken::new(TokenType::LParen, TokenSubType::NoSubType, 0, 0);
+
+  match tokens.peek_2() {
+    Some(actual) => assert_eq!(expected, actual),
+    None => assert!(false),
+  }
+}
+
+fn peek_2_returns_correct_value_after_nexts() {
+  let mut tokens = create_queue();
+
+  tokens.next();
+  tokens.next();
+  tokens.next();
+  tokens.next();
+
+  let expected = SyntaxToken::new(TokenType::RParen, TokenSubType::NoSubType, 0, 0);
+
+  match tokens.peek_2() {
+    Some(actual) => assert_eq!(expected, actual),
+    None => assert!(false),
+  }
+}
+
+fn peek_2_returns_last_token_correctly() {
+  let mut tokens = create_queue();
+
+  tokens.next();
+  tokens.next();
+  tokens.next();
+  tokens.next();
+
+  tokens.next();
+  tokens.next();
+  tokens.next();
+  tokens.next();
+
+  tokens.next();
+  tokens.next();
+
+  let expected = SyntaxToken::new(TokenType::RBrace, TokenSubType::NoSubType, 0, 0);
+
+  match tokens.peek_2() {
+    Some(..) => assert!(false),
+    None => assert!(true),
+  }
+}
+
+
+fn peek_2_returns_none_on_second_to_last_token() {
+  let mut tokens = create_queue();
+
+  tokens.next();
+  tokens.next();
+  tokens.next();
+  tokens.next();
+
+  tokens.next();
+  tokens.next();
+  tokens.next();
+  tokens.next();
+
+  tokens.next();
+  tokens.next();
+  tokens.next();
+
+  match tokens.peek_2() {
+    Some(..) => assert!(false),
+    None => assert!(true),
+  }
+}
+
+fn peek_2_returns_none_on_last_token() {
+  let mut tokens = create_queue();
+
+  tokens.next();
+  tokens.next();
+  tokens.next();
+  tokens.next();
+
+  tokens.next();
+  tokens.next();
+  tokens.next();
+  tokens.next();
+
+  tokens.next();
+  tokens.next();
+  tokens.next();
+  tokens.next();
+
+  match tokens.peek_2() {
+    Some(..) => assert!(false),
+    None => assert!(true),
   }
 }
 

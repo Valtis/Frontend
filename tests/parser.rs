@@ -685,15 +685,6 @@ fn parser_accepts_for_loop_with_variable_assignment() {
 }
 
 #[test]
-fn parser_accepts_for_loop_with_blocks() {
-  let tokens = tokenize("fn foo() { for ({}; {}; {}) { } }").unwrap();
-  match parse(tokens) {
-    Ok(..) => assert!(true),
-    Err(..) => assert!(false)
-  }
-}
-
-#[test]
 fn for_loop_with_various_parse_errors_is_reported_correctly() {
   let tokens = tokenize("fn foo() {\nfor (let a:int 5; a < 5+; a=a+) {\n let a = 5; } }").unwrap();
   match parse(tokens) {

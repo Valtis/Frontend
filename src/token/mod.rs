@@ -210,6 +210,14 @@ impl Tokens {
     }
   }
 
+  pub fn peek_2(&self) -> Option<SyntaxToken> {
+    if self.pos + 1 < self.tokens.len() {
+      Some(self.tokens[self.pos + 1])
+      } else {
+        None
+      }
+    }
+
   pub fn next(&mut self) -> Option<SyntaxToken> {
     if !self.invalid_pos() {
       self.pos += 1;
