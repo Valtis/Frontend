@@ -63,9 +63,9 @@ E2 -> E3 LESS_MORE_EXPRESSION
 
 LESS_MORE_EXPRESSION -> >= E3 LESS_MORE_EXPRESSION
                       | <= E3 LESS_MORE_EXPRESSION
-					  | > E3 LESS_MORE_EXPRESSION
-					  | < E3 LESS_MORE_EXPRESSION
-					  | e
+                      | > E3 LESS_MORE_EXPRESSION
+                      | < E3 LESS_MORE_EXPRESSION
+                      | e
 
 E3 -> TERM PLUS_MINUS_EXPRESSION
 
@@ -89,7 +89,7 @@ TYPE -> int_type
       | double_type
       | boolean_type
       | string_type 
-	  | void_type
+      | void_type
 
 CONSTANT_VALUE -> integer_token
                 | float_token
@@ -98,7 +98,7 @@ CONSTANT_VALUE -> integer_token
                 | string_token  
 				
 
-	note on CONSTANT_VALUE: for numbers, +/- are valid start tokens (eg. "+" token followed by a int/float/double would be accepted)
+note on CONSTANT_VALUE: for numbers, +/- are valid start tokens (eg. "+" token followed by a int/float/double would be accepted)
 
 
 Error recovery
