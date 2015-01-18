@@ -698,3 +698,161 @@ fn for_loop_with_various_parse_errors_is_reported_correctly() {
     }
   }
 }
+
+
+#[test]
+fn parser_accepts_if_statement() {
+  let tokens = tokenize("fn foo() { if (a == 5) { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+
+#[test]
+fn parser_accepts_if_elseif_statement() {
+  let tokens = tokenize("fn foo() { if (a == 5) { } elif(a == 6) { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn parser_accepts_if_else_statement() {
+  let tokens = tokenize("fn foo() { if (a == 5) { } else { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn parser_accepts_if_elseif_else_statement() {
+  let tokens = tokenize("fn foo() { if (a == 5) { } elif(a == 6) { } else { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn parser_accepts_if_multiple_elseif_else_statement() {
+  let tokens = tokenize("fn foo() { if (a == 5) { } elif(a == 6) { } elif(a == 7) { } else { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(true),
+    Err(..) => assert!(false)
+  }
+}
+
+#[test]
+fn parser_errors_on_else_with_condition() {
+  let tokens = tokenize("fn foo() {\nif (a == 5) { } else(a == 6) { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:21"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_multiple_else_blocks() {
+  let tokens = tokenize("fn foo() {\nif (a == 5) { } else { } else { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:26"));
+    }
+  }
+}
+
+
+#[test]
+fn parser_errors_if_else_if_and_else_blocks_are_in_wrong_order() {
+  let tokens = tokenize("fn foo() {\nif (a == 5) { } else { } elif(a==6) { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:26"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_missing_expression_with_if_block() {
+  let tokens = tokenize("fn foo() {\nif { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(2, err.len());
+      assert!(err[0].contains("2:4"));
+      assert!(err[1].contains("2:4"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_missing_expression_with_elif_block() {
+  let tokens = tokenize("fn foo() {\nif (a == 5) { } elif { } else { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert!(err.len() > 0);
+      assert!(err[0].contains("2:22"));
+    }
+  }
+}
+
+
+#[test]
+fn parser_errors_on_missing_if_block_portion() {
+  let tokens = tokenize("fn foo() {\nif (a == 5) elif(a == 5) { } else { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:13"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_missing_elif_block_portion() {
+  let tokens = tokenize("fn foo() {if (a == 5) { } \nelif(a == 5) else { } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:14"));
+    }
+  }
+}
+
+#[test]
+fn parser_errors_on_missing_else_block_portion() {
+  let tokens = tokenize("fn foo() {if (a == 5) { } elif(a == 6) { } \nelse }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => {
+      assert_eq!(1, err.len());
+      assert!(err[0].contains("2:6"));
+    }
+  }
+}
+
+
+// this test is kinda questionable; error messages are all over the place
+#[test]
+fn parser_detects_multiple_errors_correctly_on_if_elif_else_statement() {
+  let tokens = tokenize("fn foo() {\nif (a == ) \n{ let a = 5; } \nelif(== 6) \n{ let b = 4; } \nelif (a == elif(b == 6) \n{ let f = 4; }\nelse } }").unwrap();
+  match parse(tokens) {
+    Ok(..) => assert!(false),
+    Err(err) => assert!(true),
+  }
+
+}

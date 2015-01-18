@@ -80,7 +80,13 @@ impl Parser {
       }
     }
 
-    self.parse_block() && success
+    if !self.parse_block() {
+      self.skip_to_first_of(vec![TokenType::Fn]);
+
+      success = false;
+    }
+
+    success
   }
 
   fn parse_function_declaration(&mut self) -> bool {
@@ -224,30 +230,31 @@ impl Parser {
   fn parse_block(&mut self) -> bool {
 
     if !self.expect(TokenType::LBrace) {
-      self.skip_to_first_of(vec![TokenType::RBrace]);
-      self.tokens.next();
       return false;
     }
-    self.parse_statements();
+    let success = self.parse_statements();
 
-    self.expect(TokenType::RBrace)
+    self.expect(TokenType::RBrace) && success
   }
 
-  fn parse_statements(&mut self)  {
+  fn parse_statements(&mut self) -> bool {
     if self.next_token_is(TokenType::RBrace) {
-      return;
+      return true;
     }
-
+    let mut success = true;
     if !self.parse_statement() {
-      self.skip_to_first_of(vec![TokenType::RBrace, TokenType::SemiColon, TokenType::Fn]);
+      success = false;
+      self.skip_to_first_of(vec![TokenType::LBrace, TokenType::RBrace, TokenType::SemiColon, TokenType::Fn]);
 
       // next token is not rbrace or semicolon (so either fn or end-of-file -> bail out)
-      if !self.next_token_is(TokenType::RBrace) && !self.next_token_is(TokenType::SemiColon) {
-        return;
+      if !self.next_token_is(TokenType::LBrace) &&
+         !self.next_token_is(TokenType::RBrace) &&
+         !self.next_token_is(TokenType::SemiColon) {
+        return false;
       }
     }
 
-    self.parse_statements();
+    self.parse_statements() && success
   }
 
 
@@ -261,13 +268,13 @@ impl Parser {
         TokenType::Identifier =>
             self.parse_variable_assignment_or_function_call() && self.expect(TokenType::SemiColon),
         TokenType::For => self.parse_for_loop(),
+        TokenType::If => self.parse_if_statement(),
         _ => {
           let token_str = self.tokens.to_string(&token);
-          self.register_error_and_skip_to(
+          self.register_error(
             format!("Unexpected token {} when expecting start of statement",
-            token_str),
-            &token,
-            vec![TokenType::RBrace, TokenType::SemiColon]);
+              token_str),
+            &token);
             false
           }
         }
@@ -489,6 +496,81 @@ impl Parser {
 
 
 
+  fn parse_if_statement(&mut self) -> bool {
+
+    if !self.expect(TokenType::If) {
+      return false;
+    }
+
+    let mut success = true;
+
+    if !self.expect(TokenType::LParen) || !self.parse_expression() {
+      self.skip_to_first_of(vec![TokenType::RParen, TokenType::LBrace, TokenType::RBrace, TokenType::SemiColon,
+        TokenType::Fn, TokenType::Else, TokenType::ElseIf]);
+
+      // if we found else if\else, parse them and bail out as structure is preeeetty broken
+      if self.next_token_is(TokenType::ElseIf) || self.next_token_is(TokenType::Else) {
+        self.parse_optional_else_if_blocks();
+        self.parse_optional_else_block();
+        return false;
+      } else if self.next_token_is(TokenType::SemiColon) || self.next_token_is(TokenType::Fn) {
+        // if we found semicolon or function start, structure is pretty broken. Bail out and see
+        // if higher level can make any sense of this
+        return false;
+      }
+
+      success = false;
+    }
+
+    if !self.expect(TokenType::RParen) {
+      self.skip_to_first_of(vec![TokenType::LBrace, TokenType::RBrace, TokenType::SemiColon, TokenType::Fn]);
+      if !self.next_token_is(TokenType::LBrace) {
+        return false;
+      }
+      success = false;
+    }
+
+    if !self.parse_block() {
+      self.skip_to_first_of(vec![TokenType::LBrace, TokenType::RBrace, TokenType::ElseIf,
+          TokenType::Else, TokenType::SemiColon, TokenType::Fn]);
+
+      if !self.next_token_is(TokenType::Else) && !self.next_token_is(TokenType::ElseIf) {
+        return false;
+      }
+      success = false;
+    }
+
+    if !self.parse_optional_else_if_blocks() {
+      self.skip_to_first_of(vec![TokenType::LBrace, TokenType::RBrace, TokenType::Else,
+         TokenType::SemiColon, TokenType::Fn, TokenType::ElseIf]);
+    }
+
+    self.parse_optional_else_block() && success
+  }
+
+  fn parse_optional_else_if_blocks(&mut self) -> bool {
+    if !self.next_token_is(TokenType::ElseIf) {
+      return true;
+    }
+    self.tokens.next();
+
+    self.expect(TokenType::LParen) && self.parse_expression() && self.expect(TokenType::RParen) &&
+      self.parse_block() && self.parse_optional_else_if_blocks()
+  }
+
+  fn parse_optional_else_block(&mut self) -> bool {
+    if !self.next_token_is(TokenType::Else) {
+      return true;
+    }
+
+    self.tokens.next();
+
+    if !self.parse_block() {
+      return false;
+    }
+
+    true
+  }
 
   fn parse_expression(&mut self) -> bool {
     self.parse_expression_2() && self.parse_equality_expression()
