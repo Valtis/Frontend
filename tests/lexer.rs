@@ -540,13 +540,14 @@ fn line_and_line_position_information_is_set_correctly_to_tokens() {
 
 #[test]
 fn keywords_are_tokenized_correctly() {
-  let string = "if else while for let fn class new return public protected private true false int float double bool void";
+  let string = "if else elif while for let fn class new return public protected private true false int float double bool void";
 
   match tokenize(string) {
     Ok(mut tokens) => {
-      assert_eq!(19, tokens.token_count());
+      assert_eq!(20, tokens.token_count());
       assert!(generic_helper(&mut tokens, TokenType::If));
       assert!(generic_helper(&mut tokens, TokenType::Else));
+      assert!(generic_helper(&mut tokens, TokenType::ElseIf));
       assert!(generic_helper(&mut tokens, TokenType::While));
       assert!(generic_helper(&mut tokens, TokenType::For));
       assert!(generic_helper(&mut tokens, TokenType::Let));

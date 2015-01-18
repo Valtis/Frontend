@@ -231,6 +231,7 @@ impl<'a> Lexer<'a> {
   fn handle_keywords(&self, identifier: &str) -> Option<SyntaxToken> {
     match identifier {
       "if" => Some(self.create_token(TokenType::If, TokenSubType::NoSubType)),
+      "elif" => Some(self.create_token(TokenType::ElseIf, TokenSubType::NoSubType)),
       "else" => Some(self.create_token(TokenType::Else, TokenSubType::NoSubType)),
       "while" => Some(self.create_token(TokenType::While, TokenSubType::NoSubType)),
       "for" => Some(self.create_token(TokenType::For, TokenSubType::NoSubType)),
